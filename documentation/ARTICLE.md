@@ -56,3 +56,9 @@ Install angular and nestjs plugins
 λ npm i -D @nrwl/angular
 λ npm i -D @nrwl/nest
 ```
+
+## Backend
+
+```shell
+λ nx g @nrwl/nest:app backend
+```

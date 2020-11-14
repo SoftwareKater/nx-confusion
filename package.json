@@ -41,6 +41,7 @@
     "@nestjs/platform-express": "^7.0.0",
     "@nestjs/platform-socket.io": "^7.5.1",
     "@nestjs/websockets": "^7.5.1",
+    "@types/socket.io-client": "^1.4.34",
     "reflect-metadata": "^0.1.13",
     "rxjs": "~6.5.5",
     "uuid": "^8.3.1",

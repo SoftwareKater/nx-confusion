@@ -1,1 +1,1 @@
-export * from './types';
+export * from './create-game-response.interface';

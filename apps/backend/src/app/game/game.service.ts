@@ -8,14 +8,13 @@ export class GameService {
   public createGame(socket: Socket): CreateGameResponse {
     const roomId = uuid();
     const player1Id = socket.id
-    const joinedSocket = socket.join(roomId, (err: any) => {
+    socket.join(roomId, (err) => {
       if (err) {
         console.error(err);
       } else {
         console.log(`Successfully created new room ${roomId} and connected player1 ${player1Id}`);
       }
     });
-    console.log('joinedSocket ', joinedSocket);
     return {
         roomId,
         player1Id,

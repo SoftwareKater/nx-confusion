@@ -105,6 +105,7 @@ import {
   ConnectedSocket,
   SubscribeMessage,
   WebSocketGateway,
+  WsResponse,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 import { CreateGameResponse } from 'tools/schematics';
@@ -115,9 +116,11 @@ export class GameGateway {
   constructor(private readonly gameService: GameService) {}
 
   @SubscribeMessage('create-game')
-  handleCreateGame(@ConnectedSocket() soc: Socket): CreateGameResponse {
+  handleCreateGame(
+    @ConnectedSocket() soc: Socket
+  ): WsResponse<CreateGameResponse> {
     const result = this.gameService.createGame(soc);
-    return result;
+    return { event: 'game-created', data: result };
   }
 }
 ```
@@ -237,4 +240,238 @@ Successfully created new room efa8fb98-6d2e-41d0-aadc-f99adac6563c and connected
 
 Great! We conneted a frontend dummy to a backend dummy and already they already started to communicate. Lets dive deeper!
 
-### Step 2: Sophisticating the Backend
+### Step 2: Joining Game (-Rooms)
+
+This time we will start with the data structures. Joining a game requires a room number. So a request to join a game must provide that.
+
+```typescript
+tools/schemas/join-game-request.interface.ts
+
+export interface JoinGameRequest {
+  roomId: string;
+}
+```
+
+If a client joins a room he needs to now which name he goes by in that room. Also he might want to know what his opponent is called.
+
+```typescript
+tools/schemas/join-game-response.interface.ts
+
+export interface JoinGameResponse {
+    roomId?: string;
+    player1Id?: string;
+    player2Id?: string;
+  }
+```
+
+We will build an in-memory storage to keep track of all games that we have created. This will also be the place to save the data that is manipulated by our backend (we do not want to handle scores in the client).
+
+```typescript
+tools/schemas/game-data.interface.ts
+
+export interface GameData {
+  roomId?: string;
+  player1Id?: string;
+  player1Score?: number;
+  player2Id?: string;
+  player2Score?: number;
+}
+```
+
+Don't forget to add the new interfaces to the index file. Otherwise our editor/ide will not be able to find them or suggest them for auto-importing.
+
+```typescript
+tools/schemas/index.ts
+
+export * from './create-game-response.interface';
+export * from './game-data.interface';
+export * from './join-game-request.interface';
+export * from './join-game-response.interface';
+```
+
+In the gateway, add a new handler and wrap execution of all handlers into a try-catch block.
+
+```typescript
+apps/backend/app/game/game.gateway.ts
+
+import {
+  ConnectedSocket,
+  MessageBody,
+  SubscribeMessage,
+  WebSocketGateway,
+  WsResponse,
+} from '@nestjs/websockets';
+import { Socket } from 'socket.io';
+import {
+  CreateGameResponse,
+  JoinGameRequest,
+  JoinGameResponse,
+} from 'tools/schematics';
+import { GameService } from './game.service';
+
+@WebSocketGateway()
+export class GameGateway {
+  constructor(private readonly gameService: GameService) {}
+
+  @SubscribeMessage('create-game')
+  handleCreateGame(
+    @ConnectedSocket() soc: Socket
+  ): WsResponse<CreateGameResponse> {
+    try {
+      const result = this.gameService.createGame(soc);
+      return { event: 'game-created', data: result };
+    } catch (err) {
+      return { event: 'error-creating', data: err.message };
+    }
+  }
+
+  @SubscribeMessage('join-game')
+  handleJoinGame(
+    @MessageBody() req: JoinGameRequest,
+    @ConnectedSocket() soc: Socket
+  ): WsResponse<JoinGameResponse> {
+    try {
+      const result = this.gameService.joinGame(req, soc);
+      return { event: 'game-joined', data: result };
+    } catch (err) {
+      return { event: 'error-joining', data: err.message };
+    }
+  }
+}
+```
+
+Add the in-memory storage to the game service. Note that we now re-throw errors that occur in methods of the game service. All errors are handle on the top level in the gateway.
+
+```typescript
+apps/backend/app/game/game.service.ts
+
+import { Injectable } from '@nestjs/common';
+import { Socket } from 'socket.io';
+import {
+  CreateGameResponse,
+  GameData,
+  JoinGameRequest,
+  JoinGameResponse,
+} from 'tools/schematics';
+import { v4 as uuid } from 'uuid';
+
+@Injectable()
+export class GameService {
+  public inMemoryStorage: GameData[] = [];
+
+  public createGame(socket: Socket): CreateGameResponse {
+    const roomId = uuid();
+    const player1Id = socket.id;
+    socket.join(roomId, (err) => {
+      if (err) {
+        throw err;
+      } else {
+        console.log(
+          `Successfully created new room ${roomId} and connected player1 ${player1Id}`
+        );
+      }
+    });
+    this.inMemoryStorage.push({ roomId, player1Id });
+    return {
+      roomId,
+      player1Id,
+    };
+  }
+
+  public joinGame(request: JoinGameRequest, socket: Socket): JoinGameResponse {
+    const game = this.inMemoryStorage.find(g => g.roomId === roomId);
+    if (!game) {
+      throw new Error('RoomNotFoundError');
+    }
+    const player2Id = socket.id;
+    const roomId = request.roomId;
+    const player1Id = game.player1Id;
+    socket.join(roomId, (err) => {
+      if (err) {
+        throw err;
+      } else {
+        console.log(
+          `Successfully connected player2 ${player2Id} to existing room ${roomId}`
+        );
+      }
+    });
+    return {
+      roomId,
+      player1Id,
+      player2Id,
+    };
+  }
+}
+```
+
+Lets try out our new joining functionality, by creating the counterparts in our client. Add event handlers to the socket connection using `this.connection.on(event: string, (res) => void)`. Add a `joinGame` method that emits the `join-game` event and sends the required message body.
+
+```typescript
+apps/frontend/src/app/socket.service.ts
+
+import { Injectable } from '@angular/core';
+import * as io from 'socket.io-client';
+import { CreateGameResponse, JoinGameRequest, JoinGameResponse } from 'tools/schematics';
+
+const SOCKET_ENDPOINT = 'http://localhost:3333';
+
+@Injectable({ providedIn: 'root' })
+export class SocketService {
+  private connection: SocketIOClient.Socket;
+
+  public connect(): void {
+    this.connection = io(SOCKET_ENDPOINT, {});
+    this.connection.on('game-created', (res: CreateGameResponse) => {
+      console.log('ACK game-created ', res);
+    });
+    this.connection.on('error-creating', (errMsg: string) => {
+      console.error('Error while creating a game: ', errMsg)
+    })
+    this.connection.on('game-joined', (res: JoinGameResponse) => {
+      console.log('ACK game-joined ', res);
+    })
+    this.connection.on('error-joining', (errMsg: string) => {
+      console.log('Error while joining a game: ', errMsg);
+    })
+
+  }
+
+  public createGame(): void {
+    this.connection.emit('create-game');
+  }
+
+  public joinGame(roomId: string): void {
+    const req: JoinGameRequest = { roomId };
+    this.connection.emit('join-game', req);
+  }
+}
+```
+
+In the OnInit life-cycle method of our app component, add a call to the new `joinGame` method.
+
+```typescript
+apps/frontend/src/app/app.component.ts
+
+ngOnInit() {
+  this.socketService.connect();
+  this.socketService.createGame();
+  this.socketService.joinGame('hallo');
+}
+```
+
+Goto the browser tab, where the app is running and open the developer tools (F12). If you refresh you browser you will see one ACK and one error. The game creation succeeded, and in the corresponding ACK we can find our roomId and our player1Id, which is our `socket.id`. Since we created the game, we are automatically assigned as player 1. Joining the game however failed, because we joined the game that takes place in the room `hello`. But this room does not exists, therefore joining the game had all the rights to fail.
+
+## Interacting with the Client
+
+We have made a huge step. Our client-server (frontend-backend) communcation now works both ways. The client emits events, to trigger the server. The server reacts and in turn sends events back to the client. The client again consumes the returned events and prints them to console. However, this is all static and we as a user cannot interact in the client-server communication. So before turning to the game logic, lets put a little work into our UI. In this section we will create the overall layout and menu items.
+
+
+
+## Conclusion
+
+### Next Steps
+
+We accumulated a lot of technical debt on our way to a basic multiplayer game. A refactoring will help to add new features to the app. Ideas for refactorings include:
+* Extract the in-memory storage from the game service and create a dedicated service for the in-memory storage.
+* Divide the game service along its two purposes: managing rooms (createGame, joinGame), managing games (...). Before you do this, you should definetly extract the in-memory storage.
+*

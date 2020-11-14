@@ -14,5 +14,6 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this.socketService.connect();
     this.socketService.createGame();
+    this.socketService.joinGame('hallo');
   }
 }

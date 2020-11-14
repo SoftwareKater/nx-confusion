@@ -65,3 +65,8 @@ Install angular and nestjs plugins
 λ npm i --save @nestjs/websockets @nestjs/platform-socket.io
 λ npm i --save-dev @types/socket.io
 ```
+
+```shell
+λ nx g @nrwl/nest:module -p backend --directory app game
+λ nx g @nrwl/nest:gateway -p backend --directory app game
+```

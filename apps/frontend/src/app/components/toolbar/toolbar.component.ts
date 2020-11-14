@@ -1,20 +1,24 @@
 import { Component } from '@angular/core';
 
+import { MatDialog } from '@angular/material/dialog';
+import { HowToDialogComponent } from '../dialogs/how-to/how-to.dialog.component';
+
 @Component({
-    selector: 'angular-multiplayer-reaction-toolbar',
-    templateUrl: 'toolbar.component.html'
+  selector: 'angular-multiplayer-reaction-toolbar',
+  templateUrl: 'toolbar.component.html',
 })
-
 export class ToolbarComponent {
-    public onCreateGame() {
-        console.log('create game clicked');
-    }
+  constructor(public dialog: MatDialog) {}
 
-    public onHowTo() {
-        console.log('how to clicked');
-    }
+  public onCreateGame() {
+    console.log('create game clicked');
+  }
 
-    public onJoinGame() {
-        console.log('join game clicked');
-    }
+  public onHowTo() {
+    this.dialog.open(HowToDialogComponent);
+  }
+
+  public onJoinGame() {
+    console.log('join game clicked');
+  }
 }

@@ -10,7 +10,7 @@ There will not be any databases, so no persistence of any kinds of information. 
 
 ## From the Idea to the Mockup to the Architecture
 
-The game is a simple 2 player reaction game that is all about eye-hand coordination. It works as follows. Each player has four buttons - blue, orange, purple, and red. A big label in the middle of the screen displays the name of one of these colors. The background color of this label is randomly chosen among the other colors. The players have to press the button matching the word (not the background color). Hitting the right button earns one point. Wrong clicks loose 2 points. The first one to receive a total of 10 points wins.
+The game is a simple 2 player reaction game that is all about eye-hand coordination. It works as follows. Each player has four buttons - blue, yellow, purple, and red. A big label in the middle of the screen displays the name of one of these colors. The background color of this label is randomly chosen among the other colors. The players have to press the button matching the word (not the background color). Hitting the right button earns one point. Wrong clicks loose 2 points. The first one to receive a total of 10 points wins.
 
 (Show ui mockup here)
 
@@ -492,6 +492,8 @@ Goto the browser tab, where the app is running and open the developer tools (F12
 
 We have made a huge step. Our client-server (frontend-backend) communcation now works both ways. The client emits events, to trigger the server. The server reacts and in turn sends events back to the client. The client again consumes the returned events and prints them to console. However, this is all static and we as a user cannot interact in the client-server communication. So before turning to the game logic, lets put a little work into our UI. In this section we will create the overall layout and menu items.
 
+### Angular Material
+
 ```shell
 λ npm i @angular/material @angular/cdk
 ```
@@ -540,6 +542,8 @@ body {
   background-color: whitesmoke;
 }
 ```
+
+### Toolbar
 
 Now we are ready to start working on the user interface. Create a toolbar component in a new `components` folder
 
@@ -618,6 +622,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -625,7 +630,12 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { AppComponent } from './app.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
 
-const MATERIAL_IMPORTS = [MatMenuModule, MatIconModule, MatToolbarModule];
+const MATERIAL_IMPORTS = [
+  MatButtonModule,
+  MatMenuModule,
+  MatIconModule,
+  MatToolbarModule,
+];
 
 @NgModule({
   declarations: [AppComponent, ToolbarComponent],
@@ -635,6 +645,54 @@ const MATERIAL_IMPORTS = [MatMenuModule, MatIconModule, MatToolbarModule];
 })
 export class AppModule {}
 ```
+
+At this point you can fire up the apps again and check out our new UI.
+
+### Dialogs
+
+We will use modal dialogs to communicate with the user. All the entries in the menu will show a different dialog. The "how to"-dialog will show a small text on how to create/join games and how to play. The "create game"-dialog will eventually call the `createGame` method of our socket service. Likewise the "join game"-dialog will call the `joinGame` method, but moreover it will display an input field so that the user can enter the room id.
+
+Create a new folder `components/dialogs` where we keep all the dialogs we are about to create. Inside that create a new folder `how-to` and add the following two files
+
+```html
+frontend/src/app/components/dialogs/how-to/how-to.dialog.component.html
+
+<h1 mat-dialog-title>How To</h1>
+<div mat-dialog-content>Describe the game. Describe the other menu items.</div>
+<div mat-dialog-actions>
+  <button mat-button mat-dialog-close>Close</button>
+</div>
+```
+
+```typescript
+frontend/src/app/components/dialogs/how-to/how-to.dialog.component.ts
+
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'angular-multiplayer-reaction-how-to-dialog',
+  templateUrl: 'how-to.dialog.component.html',
+})
+export class HowToDialogComponent {}
+```
+
+To wire the dialog and the how to menu item, import the `HowToDialogComponent` into the toolbar component and change the callback method.
+
+```typescript
+frontend/src/app/components/toolbar/toolbar.component.ts
+
+public onHowTo() {
+  this.dialog.open(HowToDialogComponent);
+}
+```
+
+Repeat this for the other two dialogs.
+
+
+
+
+
+
 
 ## Conclusion
 

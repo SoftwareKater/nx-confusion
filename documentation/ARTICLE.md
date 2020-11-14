@@ -225,6 +225,33 @@ export class AppComponent implements OnInit {
 }
 ```
 
+Before we serve the apps, lets fix a warning that would otherwise pop up in our frontend. Goto `workspace.json` and add `socket.io-client` to the allowed common js dependencies.
+
+```json
+    ...
+  },
+  "frontend": {
+    "projectType": "application",
+    "schematics": {
+      "@schematics/angular:component": {
+        "style": "scss"
+      }
+    },
+    "root": "apps/frontend",
+    "sourceRoot": "apps/frontend/src",
+    "prefix": "angular-multiplayer-reaction",
+    "architect": {
+      "build": {
+        "builder": "@angular-devkit/build-angular:browser",
+        "options": {
+          "allowedCommonJsDependencies": [
+            "socket.io-client"
+          ],
+          ...
+        }
+```
+
+
 Now serve both the frontend and the backend. To do that open two console windows and issue
 
 ```
@@ -465,7 +492,9 @@ Goto the browser tab, where the app is running and open the developer tools (F12
 
 We have made a huge step. Our client-server (frontend-backend) communcation now works both ways. The client emits events, to trigger the server. The server reacts and in turn sends events back to the client. The client again consumes the returned events and prints them to console. However, this is all static and we as a user cannot interact in the client-server communication. So before turning to the game logic, lets put a little work into our UI. In this section we will create the overall layout and menu items.
 
-
+```shell
+λ npm i @angular/material @angular/cdk
+```
 
 ## Conclusion
 

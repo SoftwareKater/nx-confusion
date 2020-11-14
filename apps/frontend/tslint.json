@@ -1,0 +1,20 @@
+{
+  "extends": "../../tslint.json",
+  "rules": {
+    "directive-selector": [
+      true,
+      "attribute",
+      "angularMultiplayerReaction",
+      "camelCase"
+    ],
+    "component-selector": [
+      true,
+      "element",
+      "angular-multiplayer-reaction",
+      "kebab-case"
+    ]
+  },
+  "linterOptions": {
+    "exclude": ["!**/*"]
+  }
+}

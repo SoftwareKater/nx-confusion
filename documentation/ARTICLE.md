@@ -57,15 +57,13 @@ Install angular and nestjs plugins
 λ npm i -D @nrwl/nest
 ```
 
-## Backend
+### Backend
 
 ```shell
 λ nx g @nrwl/nest:app backend
 
 λ npm i --save @nestjs/websockets @nestjs/platform-socket.io
 λ npm i --save-dev @types/socket.io
-
-λ npm install uuid
 ```
 
 Lay the foundation of our game module, where we handle everything related to the game.
@@ -76,4 +74,19 @@ Lay the foundation of our game module, where we handle everything related to the
 λ nx g @nrwl/nest:service -p backend --directory app game
 ```
 
-Create a basic create-game event handler
+### Frontend
+
+```
+λ nx g @nrwl/angular:app
+? What name would you like to use for the application? frontend
+? Which stylesheet format would you like to use? SASS(.scss)  [ http://sass-lang.com   ]
+? Would you like to configure routing for this application? No
+```
+
+## Implementation
+
+As a first step we will construct a simple backend that provides handlers for clients to connect and send messages. And a simple frontend that connects to the backend and sends some test messages.
+
+```
+λ npm install uuid
+```

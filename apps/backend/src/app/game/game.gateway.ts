@@ -25,6 +25,7 @@ export class GameGateway {
       const result = this.gameService.createGame(soc);
       return { event: 'game-created', data: result };
     } catch (err) {
+      console.error(err);
       return { event: 'error-creating', data: err.message };
     }
   }
@@ -38,6 +39,7 @@ export class GameGateway {
       const result = this.gameService.joinGame(req, soc);
       return { event: 'game-joined', data: result };
     } catch (err) {
+      console.error(err);
       return { event: 'error-joining', data: err.message };
     }
   }

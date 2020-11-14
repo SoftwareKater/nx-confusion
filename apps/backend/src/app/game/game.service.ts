@@ -32,12 +32,12 @@ export class GameService {
   }
 
   public joinGame(request: JoinGameRequest, socket: Socket): JoinGameResponse {
-    const game = this.inMemoryStorage.find(g => g.roomId === roomId);
+    const roomId = request.roomId;
+    const player2Id = socket.id;
+    const game = this.inMemoryStorage.find((g) => g.roomId === roomId);
     if (!game) {
       throw new Error('RoomNotFoundError');
     }
-    const player2Id = socket.id;
-    const roomId = request.roomId;
     const player1Id = game.player1Id;
     socket.join(roomId, (err) => {
       if (err) {

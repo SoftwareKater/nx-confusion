@@ -225,7 +225,7 @@ export class AppComponent implements OnInit {
 }
 ```
 
-Before we serve the apps, lets fix a warning that would otherwise pop up in our frontend. Goto `workspace.json` and add `socket.io-client` to the allowed common js dependencies.
+Before we serve the apps, lets fix a warning that would otherwise pop up in our frontend. Go to `workspace.json` and add `socket.io-client` to the allowed common js dependencies (https://angular.io/guide/build#configuring-commonjs-dependencies).
 
 ```json
     ...
@@ -494,6 +494,146 @@ We have made a huge step. Our client-server (frontend-backend) communcation now 
 
 ```shell
 λ npm i @angular/material @angular/cdk
+```
+
+Add one of the prebuilt themes to styles array in `workspace.json`. It is a sibling of the `allowedCommonJsDependencies` array.
+
+```json
+
+  "styles": [
+    "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
+    "apps/frontend/src/styles.scss"
+  ],
+```
+
+Update the `index.html` with the material design icon font.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Frontend</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <!-- Material Design Icon Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  </head>
+  <body class="mat-typography">
+    <angular-multiplayer-reaction-root></angular-multiplayer-reaction-root>
+  </body>
+</html>
+```
+
+Delete the contents of `app.component.html` and `app.component.scss`. Update `styles.scss`.
+
+```scss
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: whitesmoke;
+}
+```
+
+Now we are ready to start working on the user interface. Create a toolbar component in a new `components` folder
+
+```shell
+nx g @nrwl/angular:component --project=frontend components/toolbar
+```
+
+Create a toolbar holding the title of the app and a menu.
+
+```html
+frontend/src/app/components/toolbar/toolbar.component.html
+
+<mat-toolbar color="primary">
+  <button
+    mat-icon-button
+    [matMenuTriggerFor]="menu"
+    aria-label="Example icon-button with a menu"
+  >
+    <mat-icon>more_vert</mat-icon>
+  </button>
+  <mat-menu #menu>
+    <button mat-menu-item (click)="onHowTo()">
+      <mat-icon>help</mat-icon>
+      <span>How To</span>
+    </button>
+    <button mat-menu-item (click)="onCreateGame()">
+      <mat-icon>stars</mat-icon>
+      <span>Create Game</span>
+    </button>
+    <button mat-menu-item (click)="onJoinGame()">
+      <mat-icon>play_circle_filled</mat-icon>
+      <span>Join Game</span>
+    </button>
+  </mat-menu>
+  <span>2 Player Reaction</span>
+</mat-toolbar>
+```
+
+In the typscript file add click handlers.
+
+```typescript
+frontend/src/app/components/toolbar/toolbar.component.ts
+
+import { Component } from '@angular/core';
+
+@Component({
+    selector: 'angular-multiplayer-reaction-toolbar',
+    templateUrl: 'toolbar.component.html'
+})
+
+export class ToolbarComponent {
+    public onCreateGame() {
+        console.log('create game clicked');
+    }
+
+    public onHowTo() {
+        console.log('how to clicked');
+    }
+
+    public onJoinGame() {
+        console.log('join game clicked');
+    }
+}
+```
+
+Add the new component to `app.component.html`
+
+```html
+<angular-multiplayer-reaction-toolbar></angular-multiplayer-reaction-toolbar>
+```
+
+In order to make everything work, we have to import all the material stuff that we are using.
+
+```typescript
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatToolbarModule } from '@angular/material/toolbar';
+
+import { AppComponent } from './app.component';
+import { ToolbarComponent } from './components/toolbar/toolbar.component';
+
+const MATERIAL_IMPORTS = [MatMenuModule, MatIconModule, MatToolbarModule];
+
+@NgModule({
+  declarations: [AppComponent, ToolbarComponent],
+  imports: [BrowserAnimationsModule, BrowserModule, ...MATERIAL_IMPORTS],
+  providers: [],
+  bootstrap: [AppComponent],
+})
+export class AppModule {}
 ```
 
 ## Conclusion

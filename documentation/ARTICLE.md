@@ -1133,7 +1133,29 @@ But we do need a container to orchestrate all our components. To this end create
 ng g c components/main
 ```
 
-Copy the content of app.component.html to main.component.html and delete the former. Also delete app.component.scss. Change app.component.ts to
+```html
+main.component.ts
+
+<div class="header">
+  <angular-multiplayer-reaction-toolbar></angular-multiplayer-reaction-toolbar>
+</div>
+
+<div class="content">
+  <angular-multiplayer-reaction-game-screen
+    [task]="{ label: 'Red', background: 'Blue' }"
+  ></angular-multiplayer-reaction-game-screen>
+</div>
+```
+
+```scss
+main.component.scss
+
+.header {
+  margin-bottom: 16px;
+}
+```
+
+Delete both app.component.html and app.component.scss. Change app.component.ts to
 
 ```typescript
 app.component.ts
@@ -1156,13 +1178,112 @@ export class AppComponent {}
 ng g c components/game-screen
 ```
 
+```typescript
+game-screen.component.ts
+
+import { Component, Input } from '@angular/core';
+import { GameTask } from 'tools/schematics';
+import { ColorCodeMap } from '../../constants';
+
+@Component({
+  selector: 'angular-multiplayer-reaction-game-screen',
+  templateUrl: 'game-screen.component.html',
+  styleUrls: ['game-screen.component.scss'],
+})
+export class GameScreenComponent {
+  @Input() public set task(value: GameTask) {
+    this.label = value.label;
+    this.bgColorHex = ColorCodeMap[value.background];
+  }
+
+  public label: string;
+
+  public bgColorHex: string;
+}
+```
+
+```html
+game-screen.component.html
+
+<div class="game-screen" [ngStyle]="{'backgroundColor': bgColorHex }">
+  <span class="color-label">{{ label }}</span>
+</div>
+```
+
+```scss
+game-screen.component.scss
+
+:host {
+  display: flex;
+  justify-content: center;
+}
+
+.game-screen {
+  width: 300px;
+  height: 300px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.color-label {
+  font-size: 60px;
+  color: black;
+}
+```
+
 #### Button Panel
 
 ```shell
 ng g c components/button-panel
 ```
 
+```html
+button-panel.component.html
+
+<button mat-button id="red-button">Q</button>
+<button mat-button id="yellow-button">W</button>
+<button mat-button id="blue-button">E</button>
+<button mat-button id="purple-button">R</button>
+```
+
+```scss
+button-panel.component.scss
+
+:host {
+  width: 400px;
+  height: 100%;
+  display: flex;
+  align-items: space-around;
+  justify-content: center;
+}
+
+button {
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+#red-button {
+  background-color: #d62020;
+}
+
+#blue-button {
+  background-color: #080da3;
+}
+
+#yellow-button {
+  background-color: #f8ff24;
+}
+
+#purple-button {
+  background-color: #b404cf;
+}
+```
+
 ### Wireing the UI to the Logic
+
+You may have noticed that we broke our menu function create and join game. That happend during the refactoring of our app component, more precisely when we deleted the OnInit method in app.component.ts.
 
 TODO: game facade
 https://thomasburlesonia.medium.com/push-based-architectures-with-rxjs-81b327d7c32d

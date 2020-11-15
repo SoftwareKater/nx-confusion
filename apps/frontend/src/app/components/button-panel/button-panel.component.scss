@@ -1,0 +1,28 @@
+:host {
+  width: 400px;
+  height: 100%;
+  display: flex;
+  align-items: space-around;
+  justify-content: center;
+}
+
+button {
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+#red-button {
+  background-color: #d62020;
+}
+
+#blue-button {
+  background-color: #080da3;
+}
+
+#yellow-button {
+  background-color: #f8ff24;
+}
+
+#purple-button {
+  background-color: #b404cf;
+}

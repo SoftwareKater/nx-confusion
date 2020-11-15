@@ -19,6 +19,7 @@ import { JoinGameDialogComponent } from './components/dialogs/join-game/join-gam
 import { GameCreatedSnackbarComponent } from './components/snackbars/game-created/game-created.snackbar.component';
 import { GameScreenComponent } from './components/game-screen/game-screen.component';
 import { MainComponent } from './components/main/main.component';
+import { ButtonPanelComponent } from './components/button-panel/button-panel.component';
 
 const DIALOG_DECLARATIONS = [
   CreateGameDialogComponent,
@@ -41,6 +42,7 @@ const MATERIAL_IMPORTS = [
 @NgModule({
   declarations: [
     AppComponent,
+    ButtonPanelComponent,
     GameScreenComponent,
     MainComponent,
     ToolbarComponent,

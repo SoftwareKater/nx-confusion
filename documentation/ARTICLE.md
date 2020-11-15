@@ -12,12 +12,12 @@ There will not be any databases, so no persistence of any kinds of information. 
 
 The game is a simple 2 player reaction game that is all about eye-hand coordination. It works as follows. Each player has four buttons - blue, yellow, purple, and red. A big label in the middle of the screen displays the name of one of these colors. The background color of this label is randomly chosen among the other colors. The players have to press the button matching the word (not the background color). Hitting the right button earns one point. Wrong clicks loose 2 points. The first one to receive a total of 10 points wins.
 
-(Show ui mockup here)
+TODO: (Show ui mockup here)
 
-(List a set of requirements here)
+TODO: (List a set of requirements here)
 * Users shall be able to interact with the UI via touch, clicks, and keyboard strokes.
 
-(Show architecture scetch here)
+TODO: (Show architecture scetch here)
 
 ## Set up Development Environment
 
@@ -686,13 +686,144 @@ public onHowTo() {
 }
 ```
 
-Repeat this for the other two dialogs.
+Here are the other two dialogs.
+
+TODO: add dialog code here
+
+Delete everything but the connect call from the app components OnInit method.
+
+```typescript
+apps/frontend/src/app/app.component.ts
+
+ngOnInit() {
+  this.socketService.connect();
+}
+```
+
+To test our new UI, open two browser tabs at `http://localhost:4200`. In the first tab hit "Create Game" and copy the room id from the console. In the second tab hit "Join Game" and paste the room id. Congratulations! Two different clients just joined one game room. We are ready to set up the game!
+
+Before we proceed with that task, lets add a more convenient solution to copy room ids. Also the user that created the game should receive a notification if another user joins his game room.
+
+The snack bar that notifies the joining player about a successful connection is an easy one. Just open a snackbar containing a success message during the callback on `game-joined` events.
+
+```typescript
+socket.service.ts
+
+public connect(): void {
+  // ...
+  this.connection.on('game-joined', (res: JoinGameResponse) => {
+    this.snackBar.open(`Joined player 1 ${res.player1Id}`, '', {
+      duration: 2500,
+    });
+  });
+  // ...
+}
+```
+
+For the game created snackbar lets create a new folder snackbars next to dialogs and add a new component `game-created.snackbar.component` there.
+
+```html
+frontend/src/app/components/snackbars/game-created/game-created.snackbar.component.html
+
+<span> Game created! Room id: {{ data.roomId }} </span>
+<button mat-button (click)="copyRoomIdAndDismiss()"><mat-icon>content_copy</mat-icon></button>
+```
+
+```typescript
+frontend/src/app/components/snackbars/game-created/game-created.snackbar.component.ts
+
+import { Inject } from '@angular/core';
+import { Component } from '@angular/core';
+import { MAT_SNACK_BAR_DATA, MatSnackBar } from '@angular/material/snack-bar';
+
+@Component({
+  selector: 'angular-multiplayer-reaction-game-created-snackbar',
+  templateUrl: 'game-created.snackbar.component.html',
+})
+export class GameCreatedSnackbarComponent {
+  constructor(
+    @Inject(MAT_SNACK_BAR_DATA) public data: any,
+    private readonly snackBar: MatSnackBar
+  ) {}
+
+  public async copyRoomIdAndDismiss() {
+    await navigator.clipboard.writeText(this.data.roomId);
+    this.snackBar.open('Copied room ID to clipboard!', '', { duration: 1500 });
+  }
+}
+```
+
+To wire the new snackbar to the `game-created` event, open it in the callback. Don't forget to declare the new snackbar component in our app module.
+
+```typescript
+socket.service.ts
+
+import { Injectable } from '@angular/core';
+import * as io from 'socket.io-client';
+import {
+  CreateGameResponse,
+  JoinGameRequest,
+  JoinGameResponse,
+} from 'tools/schematics';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { GameCreatedSnackbarComponent } from './components/snackbars/game-created/game-created.snackbar.component';
+
+const SOCKET_ENDPOINT = 'http://localhost:3333';
+
+@Injectable({ providedIn: 'root' })
+export class SocketService {
+  private connection: SocketIOClient.Socket;
+
+  constructor(private snackBar: MatSnackBar) {}
+
+  public connect(): void {
+    this.connection = io(SOCKET_ENDPOINT, {});
+    this.connection.on('game-created', (res: CreateGameResponse) => {
+      this.snackBar.openFromComponent(GameCreatedSnackbarComponent, {
+        data: {
+          roomId: res.roomId,
+        },
+      });
+    });
+    this.connection.on('error-creating', (errMsg: string) => {
+      console.error('Error while creating a game: ', errMsg);
+    });
+    this.connection.on('game-joined', (res: JoinGameResponse) => {
+      this.snackBar.open(`Joined player 1 ${res.player1Id}`, '', {
+        duration: 2500,
+      });
+    });
+    this.connection.on('error-joining', (errMsg: string) => {
+      console.log('Error while joining a game: ', errMsg);
+    });
+  }
+
+  public createGame(): void {
+    this.connection.emit('create-game');
+  }
+
+  public joinGame(roomId: string): void {
+    const req: JoinGameRequest = { roomId };
+    this.connection.emit('join-game', req);
+  }
+}
+```
 
 
 
+## Game Logic
 
+TODO: add methods to the backend game service to manage the game
 
+## Game UI
 
+TODO: add game ui: game screen and button panel
+
+## Wireing the UI to the Logic
+
+TODO: game facade
+https://thomasburlesonia.medium.com/push-based-architectures-with-rxjs-81b327d7c32d
+https://thomasburlesonia.medium.com/ngrx-facades-better-state-management-82a04b9a1e39
 
 ## Conclusion
 
@@ -701,4 +832,6 @@ Repeat this for the other two dialogs.
 We accumulated a lot of technical debt on our way to a basic multiplayer game. A refactoring will help to add new features to the app. Ideas for refactorings include:
 * Extract the in-memory storage from the game service and create a dedicated service for the in-memory storage.
 * Divide the game service along its two purposes: managing rooms (createGame, joinGame), managing games (...). Before you do this, you should definetly extract the in-memory storage.
-*
+* Users can join their own room. After player 2 joined, the room should be closed for new connections. Curretly player 2 users can be kicked out by other joining users.
+
+* Build data structures for all variables that currently have the type `any`.

@@ -2,10 +2,10 @@
 <div mat-dialog-content>
   <mat-form-field>
     <mat-label>Room ID</mat-label>
-    <input matInput [(ngModel)]="roomId" placeholder="605e0ee1-945e-42f4-9282-9c57ce2bb787">
+    <input matInput placeholder="605e0ee1-945e-42f4-9282-9c57ce2bb787" #roomId>
   </mat-form-field>
 </div>
 <div mat-dialog-actions>
   <button mat-button mat-dialog-close>Cancel</button>
-  <button mat-button [mat-dialog-close]="roomId" cdkFocusInitial>Join</button>
+  <button mat-button [mat-dialog-close]="roomId.value" cdkFocusInitial>Join</button>
 </div>

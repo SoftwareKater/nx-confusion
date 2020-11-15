@@ -17,9 +17,12 @@
       - [Starting Games](#starting-games)
       - [Player Moves](#player-moves)
     - [Game UI](#game-ui)
+      - [Score Board](#score-board)
       - [Game Screen](#game-screen)
       - [Button Panel](#button-panel)
     - [Wireing the UI to the Logic](#wireing-the-ui-to-the-logic)
+      - [The Game Facade](#the-game-facade)
+      - [Using the Game Facade in a Component](#using-the-game-facade-in-a-component)
   - [Conclusion](#conclusion)
     - [Next Steps](#next-steps)
 
@@ -1171,6 +1174,10 @@ import { Component } from '@angular/core';
 export class AppComponent {}
 ```
 
+#### Score Board
+
+TODO: Add a score board above the game screen. Currently no code no docs exist.
+
 
 #### Game Screen
 
@@ -1283,11 +1290,17 @@ button {
 
 ### Wireing the UI to the Logic
 
-You may have noticed that we broke our menu function create and join game. That happend during the refactoring of our app component, more precisely when we deleted the OnInit method in app.component.ts.
+You may have noticed that we broke our menu function create and join game. That happend during the refactoring of our app component, more precisely when we deleted the OnInit method in app.component.ts. But don't worry we will fix this right now.
 
-TODO: game facade
-https://thomasburlesonia.medium.com/push-based-architectures-with-rxjs-81b327d7c32d
-https://thomasburlesonia.medium.com/ngrx-facades-better-state-management-82a04b9a1e39
+The architecture that we will now apply in the frontend is called "push-based". And the heart of this architecture is a so called facade. As you can see in our architecture diagram at the beginning, the facade is a layer between the components (UI) and the services (logic). So its most basic functionality is abstracting the service layer from the components, thus it will be easier for example to change (or exchange) the services.
+
+Apart from this architectural feature, the facade manages the state of our frontend app. State is what makes frontend apps user-friendly and our app certainly can employ some form of state management. Moreover our components will not have to pull changes from the services manually or even ask services whether there are changes that should be reflected by re-rendering the UI. Instead the facade will push new changes into the components whenever the state of our app changes.
+
+If you want to learn more about this great architecture head over to https://thomasburlesonia.medium.com/push-based-architectures-with-rxjs-81b327d7c32d and https://thomasburlesonia.medium.com/ngrx-facades-better-state-management-82a04b9a1e39.
+
+#### The Game Facade
+
+#### Using the Game Facade in a Component
 
 ## Conclusion
 
@@ -1297,7 +1310,7 @@ We accumulated a lot of technical debt on our way to a basic multiplayer game. A
 * Extract the in-memory storage from the game service and create a dedicated service for the in-memory storage.
 * Divide the game service and gateway along its two purposes: managing rooms (createGame, joinGame), managing games (...). Before you do this, you should definetly extract the in-memory storage.
 * Users can join their own room. After player 2 joined, the room should be closed for new connections. Curretly player 2 users can be kicked out by other joining users.
-
 * Build data structures for all variables that currently have the type `any`.
 * Extract material imports into a library.
 * Modularize the frontend. Create a folder modules next to the components folder. In that folder create a folder dialogs/components. Now move all contens of the old app/components/dialogs into the folder app/modules/dialogs/components. Create a new file app/modules/dialogs/dialog.module.ts and declare all dialogs here. Remove the declaration of the dialogs from app/app.module.ts and instead import the new DialogModule and add it the imports array.
+* add a local storage service to the frontend app and persist the state of our app there. Create a mechanism to recover the app from the state snapshot in the localstorage. This allows users to re-enter the game after a page refresh.

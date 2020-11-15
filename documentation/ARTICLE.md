@@ -700,9 +700,11 @@ ngOnInit() {
 }
 ```
 
-To test our new UI, open two browser tabs at `http://localhost:4200`. In the first tab hit "Create Game" and copy the room id from the console. In the second tab hit "Join Game" and paste the room id. Congratulations! Two different clients just joined one game room. We are ready to set up the game!
+To test our new UI, open two browser tabs at `http://localhost:4200`. In the first tab hit "Create Game" and copy the room id from the console. In the second tab hit "Join Game" and paste the room id. Congratulations! Two different clients just joined one game room. We are ready to set up the game! Before we proceed with that task, lets add a little more convenience. The user should not have to access the dev tools, to get its room ID.
 
-Before we proceed with that task, lets add a more convenient solution to copy room ids. Also the user that created the game should receive a notification if another user joins his game room.
+### Snack Bars
+
+We will use snack bars to notify the user about the different steps of the process of creating and joining a game. First of all, after creating a new game, the user should be given the room ID and should be supplied with an easy method to copy this room ID. Moreover the joining user should receive a notification when she successfully connected to the game. The creator on the other hand should receive a notification if another user joins his game room.
 
 The snack bar that notifies the joining player about a successful connection is an easy one. Just open a snackbar containing a success message during the callback on `game-joined` events.
 
@@ -752,63 +754,65 @@ export class GameCreatedSnackbarComponent {
   }
 }
 ```
+Our solution to copy the room ID to the clipboard will only work in newer browsers. If you want to support a bigger range of browsers have a look at this SO https://stackoverflow.com/questions/400212/how-do-i-copy-to-the-clipboard-in-javascript.
 
 To wire the new snackbar to the `game-created` event, open it in the callback. Don't forget to declare the new snackbar component in our app module.
 
 ```typescript
 socket.service.ts
 
-import { Injectable } from '@angular/core';
-import * as io from 'socket.io-client';
-import {
-  CreateGameResponse,
-  JoinGameRequest,
-  JoinGameResponse,
-} from 'tools/schematics';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { GameCreatedSnackbarComponent } from './components/snackbars/game-created/game-created.snackbar.component';
-
-const SOCKET_ENDPOINT = 'http://localhost:3333';
-
-@Injectable({ providedIn: 'root' })
-export class SocketService {
-  private connection: SocketIOClient.Socket;
-
-  constructor(private snackBar: MatSnackBar) {}
-
-  public connect(): void {
-    this.connection = io(SOCKET_ENDPOINT, {});
-    this.connection.on('game-created', (res: CreateGameResponse) => {
-      this.snackBar.openFromComponent(GameCreatedSnackbarComponent, {
-        data: {
-          roomId: res.roomId,
-        },
-      });
+public connect(): void {
+  // ...
+  this.connection.on('game-created', (res: CreateGameResponse) => {
+    this.snackBar.openFromComponent(GameCreatedSnackbarComponent, {
+      data: {
+        roomId: res.roomId,
+      },
     });
-    this.connection.on('error-creating', (errMsg: string) => {
-      console.error('Error while creating a game: ', errMsg);
-    });
-    this.connection.on('game-joined', (res: JoinGameResponse) => {
-      this.snackBar.open(`Joined player 1 ${res.player1Id}`, '', {
-        duration: 2500,
-      });
-    });
-    this.connection.on('error-joining', (errMsg: string) => {
-      console.log('Error while joining a game: ', errMsg);
-    });
-  }
+  });
+  // ...
+}
 
-  public createGame(): void {
-    this.connection.emit('create-game');
-  }
+```
 
-  public joinGame(roomId: string): void {
-    const req: JoinGameRequest = { roomId };
-    this.connection.emit('join-game', req);
+Last but not least we open a snackbar when a player joins. This will be a new event that we register in our connect method.
+
+```typescript
+socket.service.ts
+
+public connect(): void {
+  // ...
+  this.connection.on('player-joined', (res: JoinGameResponse) => {
+    this.snackBar.open(`Player 2 ${res.player2Id} joined your game.`, '', {
+      duration: 2500,
+    });
+  });
+  // ...
+}
+
+```
+
+The `player-joined` event should be emitted together with the `game-joined` event and it should only be received by player 1 (the creator) and not by player 2 (the joiner). This works like so.
+
+
+```typescript
+game.gateway.ts
+
+@SubscribeMessage('join-game')
+handleJoinGame(
+  @MessageBody() req: JoinGameRequest,
+  @ConnectedSocket() soc: Socket
+): WsResponse<JoinGameResponse> {
+  try {
+    const result = this.gameService.joinGame(req, soc);
+    soc.to(result.roomId).emit('player-joined', result);  // added
+    return { event: 'game-joined', data: result };
+  } catch (err) {
+    console.error(err);
+    return { event: 'error-joining', data: err.message };
   }
 }
 ```
-
 
 
 ## Game Logic

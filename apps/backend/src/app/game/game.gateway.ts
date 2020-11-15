@@ -37,6 +37,7 @@ export class GameGateway {
   ): WsResponse<JoinGameResponse> {
     try {
       const result = this.gameService.joinGame(req, soc);
+      soc.to(result.roomId).emit('player-joined', result);
       return { event: 'game-joined', data: result };
     } catch (err) {
       console.error(err);

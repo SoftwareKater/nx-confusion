@@ -33,6 +33,11 @@ export class SocketService {
         duration: 2500,
       });
     });
+    this.connection.on('player-joined', (res: JoinGameResponse) => {
+      this.snackBar.open(`Player 2 ${res.player2Id} joined your game.`, '', {
+        duration: 2500,
+      });
+    });
     this.connection.on('error-joining', (errMsg: string) => {
       console.log('Error while joining a game: ', errMsg);
     });

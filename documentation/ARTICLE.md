@@ -1,5 +1,28 @@
 # Creating a Multiplayer Game with Angular and Nestjs
 
+- [Creating a Multiplayer Game with Angular and Nestjs](#creating-a-multiplayer-game-with-angular-and-nestjs)
+  - [Introduction](#introduction)
+    - [What This Is Not](#what-this-is-not)
+    - [From the Idea to the Mockup to the Architecture](#from-the-idea-to-the-mockup-to-the-architecture)
+    - [Set up Development Environment](#set-up-development-environment)
+  - [Implementation](#implementation)
+    - [Dummy Backend and Dummy Frontend](#dummy-backend-and-dummy-frontend)
+    - [Joining Game (-Rooms)](#joining-game--rooms)
+    - [Interacting with the Client](#interacting-with-the-client)
+      - [Angular Material](#angular-material)
+      - [Toolbar](#toolbar)
+      - [Dialogs](#dialogs)
+      - [Snack Bars](#snack-bars)
+    - [Game Logic](#game-logic)
+      - [Starting Games](#starting-games)
+      - [Player Moves](#player-moves)
+    - [Game UI](#game-ui)
+      - [Game Screen](#game-screen)
+      - [Button Panel](#button-panel)
+    - [Wireing the UI to the Logic](#wireing-the-ui-to-the-logic)
+  - [Conclusion](#conclusion)
+    - [Next Steps](#next-steps)
+
 ## Introduction
 
 In this article you will see how to create a simple multiplayer game using Angular as the frontend technology and Nestjs for the backend. Everything will be wrapped into one single mono repository using NxDev, a cli that leverages the Angular cli. Socketio will help coping with the challenges that a real-time multiplayer game poses. Angular Material will save time on the frontend design.
@@ -8,7 +31,7 @@ In this article you will see how to create a simple multiplayer game using Angul
 
 There will not be any databases, so no persistence of any kinds of information. This also implies that there is no authentication or any form of account. We will also exclude continuous integration, version control systems and testing.
 
-## From the Idea to the Mockup to the Architecture
+### From the Idea to the Mockup to the Architecture
 
 The game is a simple 2 player reaction game that is all about eye-hand coordination. It works as follows. Each player has four buttons - blue, yellow, purple, and red. A big label in the middle of the screen displays the name of one of these colors. The background color of this label is randomly chosen among the other colors. The players have to press the button matching the word (not the background color). Hitting the right button earns one point. Wrong clicks loose 2 points. The first one to receive a total of 10 points wins.
 
@@ -19,7 +42,7 @@ TODO: (List a set of requirements here)
 
 TODO: (Show architecture scetch here)
 
-## Set up Development Environment
+### Set up Development Environment
 
 For the next section you need to have a nx workspace with the angular and nestjs plugins up and running. If you know how to do this, you may well skip this section an move on to the next section. Just make sure that you have an nx workspace with a nestjs app and an angular app set up before you start the next section. Stay here if you want to learn how to bootstrap a mono repository with nxdev.
 
@@ -78,7 +101,7 @@ Create the frontend app
 
 As a first step we will construct a simple backend that provides handlers for clients to connect and send messages. And a simple frontend that connects to the backend and sends some test messages.
 
-### Step 1: Dummy Backend and Frontend
+### Dummy Backend and Dummy Frontend
 
 Let's install some packages that we will need along the way.
 
@@ -267,7 +290,7 @@ Successfully created new room efa8fb98-6d2e-41d0-aadc-f99adac6563c and connected
 
 Great! We conneted a frontend dummy to a backend dummy and already they already started to communicate. Lets dive deeper!
 
-### Step 2: Joining Game (-Rooms)
+### Joining Game (-Rooms)
 
 This time we will start with the data structures. Joining a game requires a room number. So a request to join a game must provide that.
 
@@ -410,7 +433,7 @@ export class GameService {
     const player2Id = socket.id;
     const gameIdx = this.inMemoryStorage.findIndex((g) => g.roomId === roomId);
     if (gameIdx <= 0) {
-      throw new Error('RoomNotFoundError');
+      throw new Error('RoomNotFound');
     }
     const player1Id = this.inMemoryStorage[gameIdx].player1Id;
     socket.join(roomId, (err) => {
@@ -489,11 +512,11 @@ ngOnInit() {
 
 Goto the browser tab, where the app is running and open the developer tools (F12). If you refresh you browser you will see one ACK and one error. The game creation succeeded, and in the corresponding ACK we can find our roomId and our player1Id, which is our `socket.id`. Since we created the game, we are automatically assigned as player 1. Joining the game however failed, because we joined the game that takes place in the room `hello`. But this room does not exists, therefore joining the game had all the rights to fail.
 
-## Interacting with the Client
+### Interacting with the Client
 
 We have made a huge step. Our client-server (frontend-backend) communcation now works both ways. The client emits events, to trigger the server. The server reacts and in turn sends events back to the client. The client again consumes the returned events and prints them to console. However, this is all static and we as a user cannot interact in the client-server communication. So before turning to the game logic, lets put a little work into our UI. In this section we will create the overall layout and menu items.
 
-### Angular Material
+#### Angular Material
 
 ```shell
 λ npm i @angular/material @angular/cdk
@@ -544,7 +567,7 @@ body {
 }
 ```
 
-### Toolbar
+#### Toolbar
 
 Now we are ready to start working on the user interface. Create a toolbar component in a new `components` folder
 
@@ -649,7 +672,7 @@ export class AppModule {}
 
 At this point you can fire up the apps again and check out our new UI.
 
-### Dialogs
+#### Dialogs
 
 We will use modal dialogs to communicate with the user. All the entries in the menu will show a different dialog. The "how to"-dialog will show a small text on how to create/join games and how to play. The "create game"-dialog will eventually call the `createGame` method of our socket service. Likewise the "join game"-dialog will call the `joinGame` method, but moreover it will display an input field so that the user can enter the room id.
 
@@ -703,7 +726,7 @@ ngOnInit() {
 
 To test our new UI, open two browser tabs at `http://localhost:4200`. In the first tab hit "Create Game" and copy the room id from the console. In the second tab hit "Join Game" and paste the room id. Congratulations! Two different clients just joined one game room. We are ready to set up the game! Before we proceed with that task, lets add a little more convenience. The user should not have to access the dev tools, to get its room ID.
 
-### Snack Bars
+#### Snack Bars
 
 We will use snack bars to notify the user about the different steps of the process of creating and joining a game. First of all, after creating a new game, the user should be given the room ID and should be supplied with an easy method to copy this room ID. Moreover the joining user should receive a notification when she successfully connected to the game. The creator on the other hand should receive a notification if another user joins his game room.
 
@@ -816,15 +839,295 @@ handleJoinGame(
 ```
 
 
-## Game Logic
+### Game Logic
 
-TODO: add methods to the backend game service to manage the game
+Since we will need it more often from now on, extract the code to retrieve a game from the in memory storage from the `joinGame` method.
 
-## Game UI
+```typescript
+game.service.ts
 
-TODO: add game ui: game screen and button panel
+private getGameIdxByRoomId(roomId: string): number {
+  const gameIdx = this.inMemoryStorage.findIndex((g) => g.roomId === roomId);
+  if (gameIdx <= 0) {
+    throw new Error('RoomNotFound');
+  }
+  return gameIdx;
+}
+```
 
-## Wireing the UI to the Logic
+#### Starting Games
+
+As soon as both players have joined the room, player 1 will emit the `start-game` event. The backend then has to check if everything is set up to start the game and if so create the first task.
+
+```typescript
+game.service.ts
+
+public startGame(roomId: string): GameData {
+  const game = this.inMemoryStorage[this.getGameIdxByRoomId(roomId)];
+  const ready = !!game.player1Id && !!game.player2Id
+  if (ready) {
+    game.task = this.createTask();
+    return game;
+  } else {
+    throw new Error('NotEnoughPlayers');
+  }
+}
+
+private createTask(): GameTask {
+  const colorCount = Object.keys(Color).length;
+  return {
+    label: Color[Math.random() * colorCount],
+    background: Color[Math.random() * colorCount],
+  };
+}
+```
+
+We need a new endpoint in the gateway to trigger the new `startGame` method.
+
+```typescript
+game.gateway.ts
+
+@SubscribeMessage('start-game')
+handleStartGame(
+  @MessageBody() req: StartGameRequest
+): WsResponse<unknown> {
+  try {
+    const result = this.gameService.startGame(req.roomId);
+    this.server.to(req.roomId).emit('new-task', result);
+  } catch (err) {
+    console.error(err);
+    return { event: 'error-starting', data: err.message };
+  }
+}
+```
+
+#### Player Moves
+
+After the game started, the players will make moves to score points. The game service needs to check whether a given player move is a match and award points to the player. Also if is a match, it must create a new task. The complete game service will look like that.
+
+```typescript
+game.service.ts
+
+import { Injectable } from '@nestjs/common';
+import { Socket } from 'socket.io';
+import {
+  Color,
+  CreateGameResponse,
+  GameData,
+  GameTask,
+  JoinGameRequest,
+  JoinGameResponse,
+} from 'tools/schematics';
+import { v4 as uuid } from 'uuid';
+
+@Injectable()
+export class GameService {
+  public inMemoryStorage: GameData[] = [];
+
+  public createGame(socket: Socket): CreateGameResponse {
+    const roomId = uuid();
+    const player1Id = socket.id;
+    socket.join(roomId, (err) => {
+      if (err) {
+        throw err;
+      } else {
+        console.log(
+          `Successfully created new room ${roomId} and connected player1 ${player1Id}`
+        );
+      }
+    });
+    this.inMemoryStorage.push({ roomId, player1Id });
+    return {
+      roomId,
+      player1Id,
+    };
+  }
+
+  public joinGame(request: JoinGameRequest, socket: Socket): JoinGameResponse {
+    const roomId = request.roomId;
+    const player2Id = socket.id;
+    const gameIdx = this.getGameIdxByRoomId(roomId);
+    const player1Id = this.inMemoryStorage[gameIdx].player1Id;
+    socket.join(roomId, (err) => {
+      if (err) {
+        throw err;
+      } else {
+        this.inMemoryStorage[gameIdx].player2Id = player2Id;
+        console.log(
+          `Successfully connected player2 ${player2Id} to existing room ${roomId}`
+        );
+      }
+    });
+    return {
+      roomId,
+      player1Id,
+      player2Id,
+    };
+  }
+
+  public startGame(roomId: string): GameData {
+    const game = this.inMemoryStorage[this.getGameIdxByRoomId(roomId)];
+    const ready = !!game.player1Id && !!game.player2Id
+    if (ready) {
+      game.task = this.createTask();
+      return game;
+    } else {
+      throw new Error('NotEnoughPlayers');
+    }
+  }
+
+  public playerMove(roomId: string, playerId: string, playerColor: Color): GameData {
+    const game = this.inMemoryStorage[this.getGameIdxByRoomId(roomId)];
+    game.match = false;
+    if (this.checkMatch(game, playerColor)) {
+      this.updateScore(game, playerId, 1);
+      game.match = true;
+      game.task = this.createTask();
+    } else {
+      this.updateScore(game, playerId, -2);
+    }
+    return game;
+  }
+
+  private checkMatch(game: GameData, playerColor: Color): boolean {
+    if (game.task.label === playerColor) {
+      return true;
+    }
+    return false;
+  }
+
+  private createTask(): GameTask {
+    const colorCount = Object.keys(Color).length;
+    return {
+      label: Color[Math.random() * colorCount],
+      background: Color[Math.random() * colorCount],
+    };
+  }
+
+  private getGameIdxByRoomId(roomId: string): number {
+    const gameIdx = this.inMemoryStorage.findIndex((g) => g.roomId === roomId);
+    if (gameIdx <= 0) {
+      throw new Error('RoomNotFound');
+    }
+    return gameIdx;
+  }
+
+  private updateScore(game: GameData, playerId: string, scoreDelta: number): void {
+    if (game.player1Id === playerId) {
+      game.player1Score += scoreDelta;
+    } else {
+      game.player2Score += scoreDelta;
+    }
+  }
+}
+```
+
+After adding the corresponding gateway for the `player-move` event, the complete game gateway will look like this.
+
+```typescript
+game.gateway.ts
+
+import {
+  ConnectedSocket,
+  MessageBody,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+  WsResponse,
+} from '@nestjs/websockets';
+import { Socket, Server } from 'socket.io';
+import {
+  CreateGameResponse,
+  JoinGameRequest,
+  JoinGameResponse,
+  PlayerMoveRequest,
+  StartGameRequest,
+} from 'tools/schematics';
+import { GameService } from './game.service';
+
+@WebSocketGateway()
+export class GameGateway {
+  @WebSocketServer()
+  server: Server;
+
+  constructor(private readonly gameService: GameService) {}
+
+  @SubscribeMessage('create-game')
+  handleCreateGame(
+    @ConnectedSocket() soc: Socket
+  ): WsResponse<CreateGameResponse> {
+    try {
+      const result = this.gameService.createGame(soc);
+      return { event: 'game-created', data: result };
+    } catch (err) {
+      console.error(err);
+      return { event: 'error-creating', data: err.message };
+    }
+  }
+
+  @SubscribeMessage('join-game')
+  handleJoinGame(
+    @MessageBody() req: JoinGameRequest,
+    @ConnectedSocket() soc: Socket
+  ): WsResponse<JoinGameResponse> {
+    try {
+      const result = this.gameService.joinGame(req, soc);
+      soc.broadcast.to(result.roomId).emit('player-joined', result);
+      return { event: 'game-joined', data: result };
+    } catch (err) {
+      console.error(err);
+      return { event: 'error-joining', data: err.message };
+    }
+  }
+
+  @SubscribeMessage('start-game')
+  handleStartGame(
+    @MessageBody() req: StartGameRequest
+  ): WsResponse<unknown> {
+    try {
+      const result = this.gameService.startGame(req.roomId);
+      this.server.to(req.roomId).emit('new-task', result);
+    } catch (err) {
+      console.error(err);
+      return { event: 'error-starting', data: err.message };
+    }
+  }
+
+  @SubscribeMessage('player-move')
+  handlePlayerMove(
+    @MessageBody() req: PlayerMoveRequest,
+  ): WsResponse<unknown> {
+    try {
+      const result = this.gameService.playerMove(
+        req.roomId,
+        req.playerId,
+        req.color
+      );
+      if (result.match) {
+        this.server.to(req.roomId).emit('new-task', result);
+        this.server.to(req.roomId).emit('new-score', result)
+      } else {
+        this.server.to(req.roomId).emit('new-score', result)
+      }
+    } catch (err) {
+      console.error(err);
+      return { event: 'error-moving', data: err.message };
+    }
+  }
+}
+```
+
+Note that there are 4 new events that should be consumed by clients: `new-task`, `error-starting`, `new-score`, `error-moving`
+
+### Game UI
+
+Before we connect the frontend to the refined backend, lets work on the UI again. To display the information from the backend we need a game screen. To receive input from the users we need a button panel.
+
+#### Game Screen
+
+#### Button Panel
+
+### Wireing the UI to the Logic
 
 TODO: game facade
 https://thomasburlesonia.medium.com/push-based-architectures-with-rxjs-81b327d7c32d
@@ -836,7 +1139,7 @@ https://thomasburlesonia.medium.com/ngrx-facades-better-state-management-82a04b9
 
 We accumulated a lot of technical debt on our way to a basic multiplayer game. A refactoring will help to add new features to the app. Ideas for refactorings include:
 * Extract the in-memory storage from the game service and create a dedicated service for the in-memory storage.
-* Divide the game service along its two purposes: managing rooms (createGame, joinGame), managing games (...). Before you do this, you should definetly extract the in-memory storage.
+* Divide the game service and gateway along its two purposes: managing rooms (createGame, joinGame), managing games (...). Before you do this, you should definetly extract the in-memory storage.
 * Users can join their own room. After player 2 joined, the room should be closed for new connections. Curretly player 2 users can be kicked out by other joining users.
 
 * Build data structures for all variables that currently have the type `any`.

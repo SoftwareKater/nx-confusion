@@ -1,17 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { SocketService } from './socket.service';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'angular-multiplayer-reaction-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
+  template: `
+    <angular-multiplayer-reaction-main> </angular-multiplayer-reaction-main>
+  `,
 })
-export class AppComponent implements OnInit {
-  title = 'frontend';
-
-  constructor(private readonly socketService: SocketService) {}
-
-  ngOnInit() {
-    this.socketService.connect();
-  }
-}
+export class AppComponent {}

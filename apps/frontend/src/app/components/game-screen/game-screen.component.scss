@@ -1,0 +1,18 @@
+:host {
+  display: flex;
+  justify-content: center;
+}
+
+.game-screen {
+  width: 300px;
+  height: 300px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.color-label {
+  font-size: 60px;
+  color: black;
+}

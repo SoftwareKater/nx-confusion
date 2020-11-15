@@ -1117,15 +1117,50 @@ export class GameGateway {
 }
 ```
 
-Note that there are 4 new events that should be consumed by clients: `new-task`, `error-starting`, `new-score`, `error-moving`
+Note that there are 4 new events that should be consumed by clients: `new-task`, `error-starting`, `new-score`, `error-moving`. We also used a bunch of new data structures.
+
+TODO: add data structures here (see commit "add game logic", sha 481b251b4bcb4c4727327b5392320818710316b1).
 
 ### Game UI
 
 Before we connect the frontend to the refined backend, lets work on the UI again. To display the information from the backend we need a game screen. To receive input from the users we need a button panel.
 
+Before we dive into refining our UI, lets lay a foundation with a little refactoring. We already cramed our app module with all those material imports and dialog declarations. Lets keep the template, style sheet and typescript of our app component to a minimum.
+
+But we do need a container to orchestrate all our components. To this end create a main component.
+
+```shell
+ng g c components/main
+```
+
+Copy the content of app.component.html to main.component.html and delete the former. Also delete app.component.scss. Change app.component.ts to
+
+```typescript
+app.component.ts
+
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'angular-multiplayer-reaction-root',
+  template: `
+    <angular-multiplayer-reaction-main> </angular-multiplayer-reaction-main>
+  `,
+})
+export class AppComponent {}
+```
+
+
 #### Game Screen
 
+```shell
+ng g c components/game-screen
+```
+
 #### Button Panel
+
+```shell
+ng g c components/button-panel
+```
 
 ### Wireing the UI to the Logic
 
@@ -1143,3 +1178,5 @@ We accumulated a lot of technical debt on our way to a basic multiplayer game. A
 * Users can join their own room. After player 2 joined, the room should be closed for new connections. Curretly player 2 users can be kicked out by other joining users.
 
 * Build data structures for all variables that currently have the type `any`.
+* Extract material imports into a library.
+* Modularize the frontend. Create a folder modules next to the components folder. In that folder create a folder dialogs/components. Now move all contens of the old app/components/dialogs into the folder app/modules/dialogs/components. Create a new file app/modules/dialogs/dialog.module.ts and declare all dialogs here. Remove the declaration of the dialogs from app/app.module.ts and instead import the new DialogModule and add it the imports array.

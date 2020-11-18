@@ -24,11 +24,11 @@ export class GameGateway {
   constructor(private readonly gameService: GameService) {}
 
   @SubscribeMessage('create-game')
-  handleCreateGame(
+  async handleCreateGame(
     @ConnectedSocket() soc: Socket
-  ): WsResponse<CreateGameResponse> {
+  ): Promise<WsResponse<CreateGameResponse>> {
     try {
-      const result = this.gameService.createGame(soc);
+      const result = await this.gameService.createGame(soc);
       return { event: 'game-created', data: result };
     } catch (err) {
       console.error(err);
@@ -37,12 +37,12 @@ export class GameGateway {
   }
 
   @SubscribeMessage('join-game')
-  handleJoinGame(
+  async handleJoinGame(
     @MessageBody() req: JoinGameRequest,
     @ConnectedSocket() soc: Socket
-  ): WsResponse<JoinGameResponse> {
+  ): Promise<WsResponse<JoinGameResponse>> {
     try {
-      const result = this.gameService.joinGame(req, soc);
+      const result = await this.gameService.joinGame(req, soc);
       soc.broadcast.to(result.roomId).emit('player-joined', result);
       return { event: 'game-joined', data: result };
     } catch (err) {

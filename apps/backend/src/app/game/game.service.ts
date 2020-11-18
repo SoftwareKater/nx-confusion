@@ -14,50 +14,54 @@ import { v4 as uuid } from 'uuid';
 export class GameService {
   public inMemoryStorage: GameData[] = [];
 
-  public createGame(socket: Socket): CreateGameResponse {
+  public async createGame(socket: Socket): Promise<CreateGameResponse> {
     const roomId = uuid();
     const player1Id = socket.id;
-    socket.join(roomId, (err) => {
-      if (err) {
-        throw err;
-      } else {
-        console.log(
-          `Successfully created new room ${roomId} and connected player1 ${player1Id}`
-        );
-      }
+    return new Promise((resolve, reject) => {
+      socket.join(roomId, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log(
+            `Successfully created new room ${roomId} and connected player1 ${player1Id}`
+          );
+          this.inMemoryStorage.push({ roomId, player1Id });
+          resolve({ roomId, player1Id });
+        }
+      });
     });
-    this.inMemoryStorage.push({ roomId, player1Id });
-    return {
-      roomId,
-      player1Id,
-    };
   }
 
-  public joinGame(request: JoinGameRequest, socket: Socket): JoinGameResponse {
+  public async joinGame(
+    request: JoinGameRequest,
+    socket: Socket
+  ): Promise<JoinGameResponse> {
     const roomId = request.roomId;
     const player2Id = socket.id;
     const gameIdx = this.getGameIdxByRoomId(roomId);
     const player1Id = this.inMemoryStorage[gameIdx].player1Id;
-    socket.join(roomId, (err) => {
-      if (err) {
-        throw err;
-      } else {
-        this.inMemoryStorage[gameIdx].player2Id = player2Id;
-        console.log(
-          `Successfully connected player2 ${player2Id} to existing room ${roomId}`
-        );
-      }
+    return new Promise((resolve, reject) => {
+      socket.join(roomId, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log(
+            `Successfully connected player2 ${player2Id} to existing room ${roomId}`
+          );
+          this.inMemoryStorage[gameIdx].player2Id = player2Id;
+          resolve({
+            roomId,
+            player1Id,
+            player2Id,
+          });
+        }
+      });
     });
-    return {
-      roomId,
-      player1Id,
-      player2Id,
-    };
   }
 
   public startGame(roomId: string): GameData {
     const game = this.inMemoryStorage[this.getGameIdxByRoomId(roomId)];
-    const ready = !!game.player1Id && !!game.player2Id
+    const ready = !!game.player1Id && !!game.player2Id;
     if (ready) {
       game.task = this.createTask();
       return game;
@@ -66,7 +70,11 @@ export class GameService {
     }
   }
 
-  public playerMove(roomId: string, playerId: string, playerColor: Color): GameData {
+  public playerMove(
+    roomId: string,
+    playerId: string,
+    playerColor: Color
+  ): GameData {
     const game = this.inMemoryStorage[this.getGameIdxByRoomId(roomId)];
     game.match = false;
     if (this.checkMatch(game, playerColor)) {
@@ -102,7 +110,11 @@ export class GameService {
     return gameIdx;
   }
 
-  private updateScore(game: GameData, playerId: string, scoreDelta: number): void {
+  private updateScore(
+    game: GameData,
+    playerId: string,
+    scoreDelta: number
+  ): void {
     if (game.player1Id === playerId) {
       game.player1Score += scoreDelta;
     } else {

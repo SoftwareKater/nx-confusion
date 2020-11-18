@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
 import {
@@ -10,24 +11,21 @@ import {
   delay,
   debounceTime,
 } from 'rxjs/operators';
-import { Color } from 'tools/schematics';
+import {
+  Color,
+  CreateGameResponse,
+  GameData,
+  GameScore,
+  GameState,
+  JoinGameResponse,
+} from 'tools/schematics';
 import { SocketService } from './socket.service';
-
-export interface GameScore {
-  player1: number;
-  player2: number;
-}
-
-export interface GameState {
-  playerMove: Color;
-  score: GameScore;
-  loading: boolean;
-}
+import { GameCreatedSnackbarComponent } from './components/snackbars/game-created/game-created.snackbar.component';
 
 let STATE: GameState = {
   playerMove: null,
   score: null,
-  loading: false,
+  loading: true,
 };
 
 @Injectable({ providedIn: 'root' })
@@ -61,11 +59,14 @@ export class GameFacade {
   /**
    * Watch 2 streams to trigger user loads and state updates
    */
-  constructor() {
+  constructor(
+    private snackBar: MatSnackBar,
+    private readonly socketService: SocketService
+  ) {
     this.playerMove$
       .pipe(
-        map((color) => {
-          return this.findAllUsers();
+        map((playerMove: Color) => {
+          //   console.log(playerMove);
         })
       )
       .subscribe(() => {
@@ -73,7 +74,12 @@ export class GameFacade {
       });
   }
 
-  // ------- Public Methods ------------------------
+  public init() {
+    this.socketService.connect();
+    const score: GameScore = { player1: 0, player2: 0 };
+    this.updateState({ ...STATE, score, loading: false });
+    this.createHandlers();
+  }
 
   // Allows quick snapshot access to data for ngOnInit() purposes
   public getStateSnapshot(): GameState {
@@ -89,7 +95,37 @@ export class GameFacade {
     this.updateState({ ...STATE, score, loading: false });
   }
 
-  // ------- Private Methods ------------------------
+  private createHandlers() {
+    this.socketService.createHandler(
+      'game-created',
+      (res: CreateGameResponse) => {
+        this.snackBar.openFromComponent(GameCreatedSnackbarComponent, {
+          data: {
+            roomId: res.roomId,
+          },
+        });
+      }
+    );
+    this.socketService.createHandler('error-creating', (errMsg: string) => {
+      console.error('Error while creating a game: ', errMsg);
+    });
+    this.socketService.createHandler('game-joined', (res: JoinGameResponse) => {
+      this.snackBar.open(`Joined player 1 ${res.player1Id}`, '', {
+        duration: 2500,
+      });
+    });
+    this.socketService.createHandler(
+      'player-joined',
+      (res: JoinGameResponse) => {
+        this.snackBar.open(`Player 2 ${res.player2Id} joined your game.`, '', {
+          duration: 2500,
+        });
+      }
+    );
+    this.socketService.createHandler('error-joining', (errMsg: string) => {
+      console.log('Error while joining a game: ', errMsg);
+    });
+  }
 
   /** Update internal state cache and emit from store... */
   private updateState(state: GameState) {

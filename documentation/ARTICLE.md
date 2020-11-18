@@ -13,6 +13,7 @@
       - [Toolbar](#toolbar)
       - [Dialogs](#dialogs)
       - [Snack Bars](#snack-bars)
+    - [Game Facade](#game-facade)
     - [Game Logic](#game-logic)
       - [Starting Games](#starting-games)
       - [Player Moves](#player-moves)
@@ -21,8 +22,6 @@
       - [Game Screen](#game-screen)
       - [Button Panel](#button-panel)
     - [Wireing the UI to the Logic](#wireing-the-ui-to-the-logic)
-      - [The Game Facade](#the-game-facade)
-      - [Using the Game Facade in a Component](#using-the-game-facade-in-a-component)
   - [Conclusion](#conclusion)
     - [Next Steps](#next-steps)
 
@@ -842,6 +841,210 @@ handleJoinGame(
 ```
 
 
+### Game Facade
+
+We have set up the general layout to create a game inside it. Before we dive into game play, lets lay a foundation with a little refactoring. We already cramed our app module with all those material imports and dialog declarations. Lets keep the template, style sheet and typescript of our app component to a minimum. But we do need a container to orchestrate all our components. To this end create a main component.
+
+```shell
+ng g c components/main
+```
+
+```html
+main.component.ts
+
+<div class="header">
+  <angular-multiplayer-reaction-toolbar></angular-multiplayer-reaction-toolbar>
+</div>
+
+<div class="content">
+  <angular-multiplayer-reaction-game-screen
+    [task]="{ label: 'Red', background: 'Blue' }"
+  ></angular-multiplayer-reaction-game-screen>
+</div>
+```
+
+```scss
+main.component.scss
+
+.header {
+  margin-bottom: 16px;
+}
+```
+
+Delete both app.component.html and app.component.scss. Change app.component.ts to
+
+```typescript
+app.component.ts
+
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'angular-multiplayer-reaction-root',
+  template: `
+    <angular-multiplayer-reaction-main> </angular-multiplayer-reaction-main>
+  `,
+})
+export class AppComponent {}
+```
+
+You may have noticed that we broke our menu functions create and join game. That happend when we deleted the OnInit method in app.component.ts, because this was the place where the initial socket connection was created. But don't worry we will fix this right now.
+
+The architecture that we will now apply in the frontend is called "push-based". And the heart of this architecture is a so called facade. As you can see in our architecture diagram at the beginning, the facade is a layer between the components (UI) and the services (logic). So its most basic functionality is abstracting the service layer from the components, thus it will be easier for example to change (or exchange) the services.
+
+Apart from this architectural feature, the facade manages the state of our frontend app. State is what makes frontend apps user-friendly and our app certainly can employ some form of state management. Moreover our components will not have to pull changes from the services manually or even ask services whether there are changes that should be reflected by re-rendering the UI. Instead the facade will push new changes into the components whenever the state of our app changes.
+
+If you want to learn more about this great architecture head over to https://thomasburlesonia.medium.com/push-based-architectures-with-rxjs-81b327d7c32d and https://thomasburlesonia.medium.com/ngrx-facades-better-state-management-82a04b9a1e39.
+
+Create a new file game.facade.ts with the following content.
+
+frontend/src/app/game.facade.ts
+```typescript
+
+import { Injectable } from '@angular/core';
+
+import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
+import {
+  map,
+  distinctUntilChanged,
+  switchMap,
+  startWith,
+  tap,
+  delay,
+  debounceTime,
+} from 'rxjs/operators';
+import { Color, CreateGameResponse, GameData } from 'tools/schematics';
+import { SocketService } from './socket.service';
+
+@Injectable({ providedIn: 'root' })
+export class GameFacade {
+  private store = new BehaviorSubject<GameState>(STATE);
+  private state$ = this.store.asObservable();
+
+  score$ = this.state$.pipe(
+    map((state) => state.score),
+    distinctUntilChanged()
+  );
+  playerMove$ = this.state$.pipe(
+    map((state) => state.playerMove),
+    distinctUntilChanged()
+  );
+  loading$ = this.state$.pipe(map((state) => state.loading));
+
+  /**
+   * Viewmodel that resolves once all the data is ready (or updated)...
+   */
+  public viewModel$: Observable<GameState> = combineLatest([
+    this.playerMove$,
+    this.score$,
+    this.loading$,
+  ]).pipe(
+    map(([playerMove, score, loading]) => {
+      return { playerMove, score, loading };
+    })
+  );
+
+  /**
+   * Watch streams to trigger backend communication and state updates
+   */
+  constructor(private readonly socketService: SocketService) {
+    this.playerMove$
+      .pipe(
+        map((playerMove) => {
+          console.log(playerMove);
+        })
+      )
+      .subscribe(() => {
+        this.updateState({ ...STATE, loading: false });
+      });
+  }
+
+  public init() {
+    this.socketService.connect();
+    const score: GameScore = { player1: 0, player2: 0 };
+    this.updateState({ ...STATE, score, loading: false });
+  }
+
+  // Allows quick snapshot access to data for ngOnInit() purposes
+  public getStateSnapshot(): GameState {
+    return { ...STATE, score: { ...STATE.score } };
+  }
+
+  public updateScore(newScore: GameScore): void {
+    const score = {
+      ...STATE.score,
+      player1: newScore.player1,
+      player2: newScore.player2,
+    };
+    this.updateState({ ...STATE, score, loading: false });
+  }
+
+  /** Update internal state cache and emit from store... */
+  private updateState(state: GameState) {
+    this.store.next((STATE = state));
+  }
+}
+```
+
+As you can see in the `init` method, now the game facade is reponsible for creating the socket connection. The app component will in turn trigger the game facade.
+
+frontend/src/app/app.component.ts
+```typescript
+
+export class AppComponent implements OnInit {
+  constructor(private readonly gameFacade: GameFacade) {}
+  ngOnInit() {
+    this.gameFacade.init();
+  }
+}
+```
+
+Add the method `createHandler` to the socket service. It allows to create event handlers from outside the socket service.
+
+```typescript
+
+public createHandler(event: string, callback: (res: any) => void): void {
+  this.connection.on(event, callback);
+}
+```
+
+Create a new function `createHandlers` in the game facade. Copy all lines but the first one from the `connect` method of the socket service to this new function. Adapt the code to its new location by exchanging `this.connection.on` with `this.socketService.createHandler`. Note that since we are suppling anonymous functions as callbacks, `this` will reference the game facade. If we were using methods of the game facade as callbacks, we would have to `.bind(this)`.
+
+frontend/src/app/game.facade.ts
+```typescript
+
+private createHandlers() {
+  this.socketService.createHandler(
+    'game-created',
+    (res: CreateGameResponse) => {
+      this.snackBar.openFromComponent(GameCreatedSnackbarComponent, {
+        data: {
+          roomId: res.roomId,
+        },
+      });
+    }
+  );
+  this.socketService.createHandler('error-creating', (errMsg: string) => {
+    console.error('Error while creating a game: ', errMsg);
+  });
+  this.socketService.createHandler('game-joined', (res: JoinGameResponse) => {
+    this.snackBar.open(`Joined player 1 ${res.player1Id}`, '', {
+      duration: 2500,
+    });
+  });
+  this.socketService.createHandler(
+    'player-joined',
+    (res: JoinGameResponse) => {
+      this.snackBar.open(`Player 2 ${res.player2Id} joined your game.`, '', {
+        duration: 2500,
+      });
+    }
+  );
+  this.socketService.createHandler('error-joining', (errMsg: string) => {
+    console.log('Error while joining a game: ', errMsg);
+  });
+}
+```
+
 ### Game Logic
 
 Since we will need it more often from now on, extract the code to retrieve a game from the in memory storage from the `joinGame` method.
@@ -1128,52 +1331,6 @@ TODO: add data structures here (see commit "add game logic", sha 481b251b4bcb4c4
 
 Before we connect the frontend to the refined backend, lets work on the UI again. To display the information from the backend we need a game screen. To receive input from the users we need a button panel.
 
-Before we dive into refining our UI, lets lay a foundation with a little refactoring. We already cramed our app module with all those material imports and dialog declarations. Lets keep the template, style sheet and typescript of our app component to a minimum.
-
-But we do need a container to orchestrate all our components. To this end create a main component.
-
-```shell
-ng g c components/main
-```
-
-```html
-main.component.ts
-
-<div class="header">
-  <angular-multiplayer-reaction-toolbar></angular-multiplayer-reaction-toolbar>
-</div>
-
-<div class="content">
-  <angular-multiplayer-reaction-game-screen
-    [task]="{ label: 'Red', background: 'Blue' }"
-  ></angular-multiplayer-reaction-game-screen>
-</div>
-```
-
-```scss
-main.component.scss
-
-.header {
-  margin-bottom: 16px;
-}
-```
-
-Delete both app.component.html and app.component.scss. Change app.component.ts to
-
-```typescript
-app.component.ts
-
-import { Component } from '@angular/core';
-
-@Component({
-  selector: 'angular-multiplayer-reaction-root',
-  template: `
-    <angular-multiplayer-reaction-main> </angular-multiplayer-reaction-main>
-  `,
-})
-export class AppComponent {}
-```
-
 #### Score Board
 
 TODO: Add a score board above the game screen. Currently no code no docs exist.
@@ -1290,17 +1447,7 @@ button {
 
 ### Wireing the UI to the Logic
 
-You may have noticed that we broke our menu function create and join game. That happend during the refactoring of our app component, more precisely when we deleted the OnInit method in app.component.ts. But don't worry we will fix this right now.
-
-The architecture that we will now apply in the frontend is called "push-based". And the heart of this architecture is a so called facade. As you can see in our architecture diagram at the beginning, the facade is a layer between the components (UI) and the services (logic). So its most basic functionality is abstracting the service layer from the components, thus it will be easier for example to change (or exchange) the services.
-
-Apart from this architectural feature, the facade manages the state of our frontend app. State is what makes frontend apps user-friendly and our app certainly can employ some form of state management. Moreover our components will not have to pull changes from the services manually or even ask services whether there are changes that should be reflected by re-rendering the UI. Instead the facade will push new changes into the components whenever the state of our app changes.
-
-If you want to learn more about this great architecture head over to https://thomasburlesonia.medium.com/push-based-architectures-with-rxjs-81b327d7c32d and https://thomasburlesonia.medium.com/ngrx-facades-better-state-management-82a04b9a1e39.
-
-#### The Game Facade
-
-#### Using the Game Facade in a Component
+With our super fancy game facade in place, wireing our UI to the new logic parts is really easy.
 
 ## Conclusion
 

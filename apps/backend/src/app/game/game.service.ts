@@ -64,6 +64,9 @@ export class GameService {
     const ready = !!game.player1Id && !!game.player2Id;
     if (ready) {
       game.task = this.createTask();
+      game.player1Score = 0;
+      game.player2Score = 0;
+      console.log(game);
       return game;
     } else {
       throw new Error('NotEnoughPlayers');
@@ -95,10 +98,17 @@ export class GameService {
   }
 
   private createTask(): GameTask {
-    const colorCount = Object.keys(Color).length;
+    const colors = [...Object.values(Color)];
+    const colorCount = colors.length;
+    const label = colors[Math.floor(Math.random() * colorCount)];
+    colors.splice(
+      colors.findIndex((color) => color === label),
+      1
+    );
+    const background = colors[Math.floor(Math.random() * (colorCount - 1))];
     return {
-      label: Color[Math.random() * colorCount],
-      background: Color[Math.random() * colorCount],
+      label,
+      background,
     };
   }
 
@@ -116,9 +126,11 @@ export class GameService {
     scoreDelta: number
   ): void {
     if (game.player1Id === playerId) {
-      game.player1Score += scoreDelta;
+      game.player1Score =
+        game.player1Score + scoreDelta > 0 ? game.player1Score + scoreDelta : 0;
     } else {
-      game.player2Score += scoreDelta;
+      game.player2Score =
+        game.player2Score + scoreDelta > 0 ? game.player2Score + scoreDelta : 0;
     }
   }
 }

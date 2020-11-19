@@ -1,0 +1,18 @@
+:host {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.score-container {
+  width: 256px;
+  height: 100%;
+  display: flex;
+  align-items: space-between;
+  justify-content: space-between;
+
+}
+
+.score {
+  font-size: 36px;
+}

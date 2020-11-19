@@ -20,6 +20,15 @@ import { GameCreatedSnackbarComponent } from './components/snackbars/game-create
 import { GameScreenComponent } from './components/game-screen/game-screen.component';
 import { MainComponent } from './components/main/main.component';
 import { ButtonPanelComponent } from './components/button-panel/button-panel.component';
+import { ScoreBoardComponent } from './components/score-board/score-board.component';
+
+const COMPONENT_DECLARATIONS = [
+  ButtonPanelComponent,
+  GameScreenComponent,
+  MainComponent,
+  ScoreBoardComponent,
+  ToolbarComponent,
+];
 
 const DIALOG_DECLARATIONS = [
   CreateGameDialogComponent,
@@ -42,10 +51,7 @@ const MATERIAL_IMPORTS = [
 @NgModule({
   declarations: [
     AppComponent,
-    ButtonPanelComponent,
-    GameScreenComponent,
-    MainComponent,
-    ToolbarComponent,
+    ...COMPONENT_DECLARATIONS,
     ...DIALOG_DECLARATIONS,
     ...SNACKBAR_DECLARATIONS,
   ],

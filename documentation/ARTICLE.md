@@ -123,6 +123,8 @@ Lay the foundation of our game module, where we handle everything related to the
 
 The gateway will serve as the entrance to our backend. Clients that connect or send messages to the backend will be served by the gateway.
 
+TODO: handleCreateGame should be async and gameService.createGame should return a promise and promisify the call of socket.join (the same is true for joinGame).
+
 ```typescript
 apps/backend/app/game/game.gateway.ts
 
@@ -1412,6 +1414,8 @@ button-panel.component.html
 <button mat-button id="purple-button">R</button>
 ```
 
+TODO: Colors should be defined at one point only (ssot)
+
 ```scss
 button-panel.component.scss
 
@@ -1433,7 +1437,7 @@ button {
 }
 
 #blue-button {
-  background-color: #080da3;
+  background-color: #1347b8;
 }
 
 #yellow-button {

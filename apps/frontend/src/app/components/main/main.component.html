@@ -3,8 +3,15 @@
 </div>
 
 <div class="content">
-  <angular-multiplayer-reaction-game-screen
-    [task]="{ label: 'Red', background: 'Blue' }"
-  ></angular-multiplayer-reaction-game-screen>
-  <angular-multiplayer-reaction-button-panel></angular-multiplayer-reaction-button-panel>
+  <div *ngIf="vm$ | async as vm">
+    <angular-multiplayer-reaction-score-board
+      [score]="vm.score"
+    ></angular-multiplayer-reaction-score-board>
+
+    <angular-multiplayer-reaction-game-screen
+      [task]="vm.task"
+    ></angular-multiplayer-reaction-game-screen>
+
+    <angular-multiplayer-reaction-button-panel></angular-multiplayer-reaction-button-panel>
+  </div>
 </div>

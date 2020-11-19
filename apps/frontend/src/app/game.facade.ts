@@ -23,6 +23,7 @@ import { SocketService } from './socket.service';
 import { GameCreatedSnackbarComponent } from './components/snackbars/game-created/game-created.snackbar.component';
 
 let STATE: GameState = {
+  task: null,
   playerMove: null,
   score: null,
   loading: true,
@@ -30,15 +31,21 @@ let STATE: GameState = {
 
 @Injectable({ providedIn: 'root' })
 export class GameFacade {
+  private roomId: string;
+  private playerId: string;
   private store = new BehaviorSubject<GameState>(STATE);
   private state$ = this.store.asObservable();
 
-  score$ = this.state$.pipe(
-    map((state) => state.score),
+  task$ = this.state$.pipe(
+    map((state) => state.task),
     distinctUntilChanged()
   );
   playerMove$ = this.state$.pipe(
     map((state) => state.playerMove),
+    distinctUntilChanged()
+  );
+  score$ = this.state$.pipe(
+    map((state) => state.score),
     distinctUntilChanged()
   );
   loading$ = this.state$.pipe(map((state) => state.loading));
@@ -47,17 +54,18 @@ export class GameFacade {
    * Viewmodel that resolves once all the data is ready (or updated)...
    */
   public viewModel$: Observable<GameState> = combineLatest([
+    this.task$,
     this.playerMove$,
     this.score$,
     this.loading$,
   ]).pipe(
-    map(([playerMove, score, loading]) => {
-      return { playerMove, score, loading };
+    map(([task, playerMove, score, loading]) => {
+      return { task, playerMove, score, loading };
     })
   );
 
   /**
-   * Watch 2 streams to trigger user loads and state updates
+   * Watch streams to trigger backend communication and state updates
    */
   constructor(
     private snackBar: MatSnackBar,
@@ -65,12 +73,19 @@ export class GameFacade {
   ) {
     this.playerMove$
       .pipe(
-        map((playerMove: Color) => {
-          //   console.log(playerMove);
+        tap((playerMove: Color) => {
+          if (playerMove) {
+            this.socketService.playerMove(
+              playerMove,
+              this.roomId,
+              this.playerId
+            );
+          }
         })
       )
       .subscribe(() => {
-        this.updateState({ ...STATE, loading: false });
+        const playerMove = null;
+        this.updateState({ ...STATE, playerMove, loading: false });
       });
   }
 
@@ -86,19 +101,16 @@ export class GameFacade {
     return { ...STATE, score: { ...STATE.score } };
   }
 
-  public updateScore(newScore: GameScore): void {
-    const score = {
-      ...STATE.score,
-      player1: newScore.player1,
-      player2: newScore.player2,
-    };
-    this.updateState({ ...STATE, score, loading: false });
+  public updatePlayerMove(playerMove: Color): void {
+    this.updateState({ ...STATE, playerMove, loading: true });
   }
 
   private createHandlers() {
     this.socketService.createHandler(
       'game-created',
       (res: CreateGameResponse) => {
+        this.roomId = res.roomId;
+        this.playerId = res.player1Id;
         this.snackBar.openFromComponent(GameCreatedSnackbarComponent, {
           data: {
             roomId: res.roomId,
@@ -110,6 +122,8 @@ export class GameFacade {
       console.error('Error while creating a game: ', errMsg);
     });
     this.socketService.createHandler('game-joined', (res: JoinGameResponse) => {
+      this.roomId = res.roomId;
+      this.playerId = res.player2Id;
       this.snackBar.open(`Joined player 1 ${res.player1Id}`, '', {
         duration: 2500,
       });
@@ -120,10 +134,22 @@ export class GameFacade {
         this.snackBar.open(`Player 2 ${res.player2Id} joined your game.`, '', {
           duration: 2500,
         });
+        this.socketService.startGame(this.roomId);
       }
     );
     this.socketService.createHandler('error-joining', (errMsg: string) => {
       console.log('Error while joining a game: ', errMsg);
+    });
+    this.socketService.createHandler('new-score', (res: GameData) => {
+      const score = {
+        ...STATE.score,
+        player1: res.player1Score,
+        player2: res.player2Score,
+      };
+      this.updateState({ ...STATE, score, loading: false });
+    });
+    this.socketService.createHandler('new-task', (res: GameData) => {
+      this.updateState({ ...STATE, task: res.task, loading: false });
     });
   }
 

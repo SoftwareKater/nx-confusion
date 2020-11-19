@@ -9,8 +9,13 @@ import { ColorCodeMap } from '../../constants';
 })
 export class GameScreenComponent {
   @Input() public set task(value: GameTask) {
-    this.label = value.label;
-    this.bgColorHex = ColorCodeMap[value.background];
+    if (value && value.background && value.label) {
+      this.label = value.label.toUpperCase();
+      this.bgColorHex = ColorCodeMap[value.background];
+    } else {
+      this.label = 'TASK';
+      this.bgColorHex = '#ffffff';
+    }
   }
 
   public label: string;

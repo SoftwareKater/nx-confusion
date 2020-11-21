@@ -5,5 +5,4 @@ import { Component } from '@angular/core';
     <angular-multiplayer-reaction-main> </angular-multiplayer-reaction-main>
   `,
 })
-export class AppComponent {
-}
+export class AppComponent {}

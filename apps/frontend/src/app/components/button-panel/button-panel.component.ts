@@ -1,6 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { Color } from 'tools/schematics';
-import { GameFacade } from '../../game.facade';
 
 @Component({
   selector: 'angular-multiplayer-reaction-button-panel',
@@ -8,10 +7,14 @@ import { GameFacade } from '../../game.facade';
   styleUrls: ['button-panel.component.scss'],
 })
 export class ButtonPanelComponent {
+  @Output() buttonPressed = new EventEmitter<Color>();
 
-  constructor(private readonly gameFacade: GameFacade){}
+  public get color(): typeof Color {
+    return Color;
+  }
 
   public onClick(color: Color) {
-    this.gameFacade.updatePlayerMove(color);
+    console.log(color);
+    this.buttonPressed.emit(color);
   }
 }

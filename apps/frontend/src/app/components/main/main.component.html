@@ -12,6 +12,6 @@
       [task]="vm.task"
     ></angular-multiplayer-reaction-game-screen>
 
-    <angular-multiplayer-reaction-button-panel></angular-multiplayer-reaction-button-panel>
+    <angular-multiplayer-reaction-button-panel (buttonPressed)="onButtonPressed($event)"></angular-multiplayer-reaction-button-panel>
   </div>
 </div>

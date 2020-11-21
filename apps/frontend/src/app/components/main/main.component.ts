@@ -16,4 +16,8 @@ export class MainComponent implements OnInit {
   ngOnInit() {
     this.gameFacade.init();
   }
+
+  public onButtonPressed($event: Color) {
+    this.gameFacade.updatePlayerMove($event);
+  }
 }

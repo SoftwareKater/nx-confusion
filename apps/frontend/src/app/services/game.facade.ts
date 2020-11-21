@@ -20,7 +20,7 @@ import {
   JoinGameResponse,
 } from 'tools/schematics';
 import { SocketService } from './socket.service';
-import { GameCreatedSnackbarComponent } from './components/snackbars/game-created/game-created.snackbar.component';
+import { GameCreatedSnackbarComponent } from '../components/snackbars/game-created/game-created.snackbar.component';
 
 let STATE: GameState = {
   task: null,

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
-import { GameState } from 'tools/schematics';
-import { GameFacade } from '../../game.facade';
+import { Color, GameState } from 'tools/schematics';
+import { GameFacade } from '../../services/game.facade';
 
 @Component({
   selector: 'angular-multiplayer-reaction-main',

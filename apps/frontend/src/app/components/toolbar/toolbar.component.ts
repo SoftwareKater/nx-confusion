@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 import { MatDialog } from '@angular/material/dialog';
-import { SocketService } from '../../socket.service';
+import { SocketService } from '../../services/socket.service';
 import { CreateGameDialogComponent } from '../dialogs/create-game/create-game.dialog.component';
 import { HowToDialogComponent } from '../dialogs/how-to/how-to.dialog.component';
 import { JoinGameDialogComponent } from '../dialogs/join-game/join-game.dialog.component';

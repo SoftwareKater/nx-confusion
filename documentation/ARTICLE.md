@@ -21,6 +21,7 @@
       - [Score Board](#score-board)
       - [Game Screen](#game-screen)
       - [Button Panel](#button-panel)
+      - [Update Main Component](#update-main-component)
     - [Wireing the UI to the Logic](#wireing-the-ui-to-the-logic)
   - [Conclusion](#conclusion)
     - [Next Steps](#next-steps)
@@ -859,9 +860,6 @@ main.component.ts
 </div>
 
 <div class="content">
-  <angular-multiplayer-reaction-game-screen
-    [task]="{ label: 'Red', background: 'Blue' }"
-  ></angular-multiplayer-reaction-game-screen>
 </div>
 ```
 
@@ -1335,8 +1333,67 @@ Before we connect the frontend to the refined backend, lets work on the UI again
 
 #### Score Board
 
-TODO: Add a score board above the game screen. Currently no code no docs exist.
+```shell
+ng g c components/score-board
+```
 
+```typescript
+apps/frontend/src/app/components/score-board/score-board.component.ts
+
+import { GameScore } from 'tools/schematics';
+
+@Component({
+  selector: 'angular-multiplayer-reaction-score-board',
+  templateUrl: 'score-board.component.html',
+  styleUrls: ['score-board.component.scss'],
+})
+export class ScoreBoardComponent {
+  @Input() set score(value: GameScore) {
+    if (value) {
+      this.player1Score = value.player1 > 9 ? '' + value.player1 : '0' + value.player1;
+      this.player2Score = value.player2 > 9 ? '' + value.player2 : '0' + value.player2;
+    } else {
+      this.player1Score = '00';
+      this.player2Score = '00';
+    }
+  }
+
+  public player1Score: string;
+
+  public player2Score: string;
+}
+```
+
+```html
+score-board.component.html
+
+<div class="score-container">
+  <span class="score">{{ player1Score }}</span>
+  <span class="score">{{ player2Score }}</span>
+</div>
+```
+
+```scss
+score-board.component.scss
+
+:host {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.score-container {
+  width: 256px;
+  height: 100%;
+  display: flex;
+  align-items: space-between;
+  justify-content: space-between;
+}
+
+.score {
+  font-size: 36px;
+}
+```
 
 #### Game Screen
 
@@ -1448,6 +1505,29 @@ button {
   background-color: #b404cf;
 }
 ```
+
+#### Update Main Component
+
+Now we can use all these new ui components in the main component.
+
+```html
+<div class="header">
+  <angular-multiplayer-reaction-toolbar></angular-multiplayer-reaction-toolbar>
+</div>
+
+<div class="content">
+  <angular-multiplayer-reaction-score-board
+    [score]="{ player1: 3, player2: 8 }"
+  ></angular-multiplayer-reaction-score-board>
+
+  <angular-multiplayer-reaction-game-screen
+    [task]="{ label: 'Red', background: 'Yellow' }"
+  ></angular-multiplayer-reaction-game-screen>
+
+  <angular-multiplayer-reaction-button-panel></angular-multiplayer-reaction-button-panel>
+</div>
+```
+
 
 ### Wireing the UI to the Logic
 

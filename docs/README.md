@@ -34,7 +34,7 @@
 
 In this article you will see how to create a simple multiplayer game using Angular as the frontend technology and Nestjs for the backend. Everything will be wrapped into one single mono repository using NxDev, a cli that leverages the Angular cli. Socketio will help coping with the challenges that a real-time multiplayer game poses. Angular Material will save time on the frontend design.
 
-You find all the code that is discussed in this artikel (here on github)[https://github.com/SoftwareKater/nx-multiplayer-game]. Also, the app is (deployed to heroku)[https://nx-confusion-staging.herokuapp.com/]. Pay a visit to see what we are up to.
+You find all the code that is discussed in this artikel [here on github](https://github.com/SoftwareKater/nx-multiplayer-game). Also, the app is [deployed to heroku](https://nx-confusion-staging.herokuapp.com/). Pay a visit to see what we are up to.
 ### Tech Stack
 
 Nrwl Nx Workspace

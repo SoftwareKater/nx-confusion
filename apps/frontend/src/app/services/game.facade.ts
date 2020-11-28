@@ -1,11 +1,7 @@
 import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
-import {
-  map,
-  distinctUntilChanged,
-  tap,
-} from 'rxjs/operators';
+import { map, distinctUntilChanged, tap } from 'rxjs/operators';
 import {
   Color,
   CreateGameResponse,
@@ -114,7 +110,9 @@ export class GameFacade {
       }
     );
     this.socketService.createHandler('error-creating', (errMsg: string) => {
-      console.error('Error while creating a game: ', errMsg);
+      this.snackBar.open(`Error while creating the game: ${errMsg}`, '', {
+        duration: 2500,
+      });
     });
     this.socketService.createHandler('game-joined', (res: JoinGameResponse) => {
       this.roomId = res.roomId;
@@ -133,7 +131,9 @@ export class GameFacade {
       }
     );
     this.socketService.createHandler('error-joining', (errMsg: string) => {
-      console.log('Error while joining a game: ', errMsg);
+      this.snackBar.open(`Error while joining the game: ${errMsg}`, '', {
+        duration: 2500,
+      });
     });
     this.socketService.createHandler('new-score', (res: GameData) => {
       const score = {

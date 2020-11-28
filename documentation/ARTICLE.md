@@ -37,7 +37,7 @@ You find all the code that is discussed in this artikel (here on github)[https:/
 
 ### What This Is Not
 
-There will not be any databases, so no persistence of any kinds of information. This also implies that there is no authentication or any form of account. We will also exclude continuous integration, version control systems and testing.
+There will be no databases involved, so no persistence of any kinds of information. There is no authentication or authorization and generally no treatment of security issues. We will also exclude continuous integration, version control systems and testing. Those things should all be part of the development process of any app, but would go beyond the scope of this article.
 
 ### From the Idea to the Mockup to the Architecture
 

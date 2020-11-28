@@ -1,17 +1,33 @@
 import { Injectable } from '@angular/core';
 import * as io from 'socket.io-client';
-import { Color, JoinGameRequest, PlayerMoveRequest, StartGameRequest } from 'tools/schematics';
-
-const SOCKET_ENDPOINT = 'http://localhost:3333';
+import {
+  Color,
+  JoinGameRequest,
+  PlayerMoveRequest,
+  StartGameRequest,
+} from 'tools/schematics';
 
 @Injectable({ providedIn: 'root' })
 export class SocketService {
-  private connection: SocketIOClient.Socket;
+  private get connection() {
+    if (!this.socket) {
+      return null;
+    }
+    if (!this.socket.connected) {
+      this.socket = this.socket.open();
+    }
+    return this.socket;
+  }
+  private set connection(value: SocketIOClient.Socket) {
+    this.socket = value;
+  }
+
+  private socket: SocketIOClient.Socket;
 
   constructor() {}
 
   public connect(): void {
-    this.connection = io(SOCKET_ENDPOINT, {});
+    this.connection = io('/');
   }
 
   public createHandler(event: string, callback: (res: any) => void): void {

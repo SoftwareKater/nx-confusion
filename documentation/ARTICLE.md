@@ -23,12 +23,17 @@
       - [Button Panel](#button-panel)
       - [Update Main Component](#update-main-component)
     - [Wireing the UI to the Logic](#wireing-the-ui-to-the-logic)
+    - [Win Condition](#win-condition)
+    - [Preparation for Deployment](#preparation-for-deployment)
   - [Conclusion](#conclusion)
     - [Next Steps](#next-steps)
+    - [Article TODOs](#article-todos)
 
 ## Introduction
 
 In this article you will see how to create a simple multiplayer game using Angular as the frontend technology and Nestjs for the backend. Everything will be wrapped into one single mono repository using NxDev, a cli that leverages the Angular cli. Socketio will help coping with the challenges that a real-time multiplayer game poses. Angular Material will save time on the frontend design.
+
+You find all the code that is discussed in this artikel (here on github)[https://github.com/SoftwareKater/nx-multiplayer-game]. Also, the app is (deployed to heroku)[https://nx-confusion-staging.herokuapp.com/]. Pay a visit to see what we are up to.
 
 ### What This Is Not
 
@@ -1533,6 +1538,110 @@ Now we can use all these new ui components in the main component.
 
 With our super fancy game facade in place, wireing our UI to the new logic parts is really easy.
 
+### Win Condition
+
+### Preparation for Deployment
+
+There is only one simple change needed to prepare this code for deployment: The backend has to serve the frontend.
+
+Install the serve-static package.
+
+```shell
+npm i @nestjs/serve-static
+```
+
+Serve the frontend.
+
+```typescript
+backend/.../app.module.ts
+
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { Module } from '@nestjs/common';
+import { GameModule } from './game/game.module';
+
+@Module({
+  imports: [
+    GameModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'frontend'),
+      exclude: ['/api*'],
+    }),
+  ],
+  controllers: [],
+  providers: [],
+})
+export class AppModule {}
+```
+
+In the socket service, where we connect to the backend, we can now simply connect to `'/'`. This also removes the ugly constant from the file.
+
+```typescript
+// ... imports unchanged ...
+
+@Injectable({ providedIn: 'root' })
+export class SocketService {
+  private get connection() {
+    if (!this.socket) {
+      return null;
+    }
+    if (!this.socket.connected) {
+      this.socket = this.socket.open();
+    }
+    return this.socket;
+  }
+  private set connection(value: SocketIOClient.Socket) {
+    this.socket = value;
+  }
+
+  private socket: SocketIOClient.Socket;
+
+  constructor() {}
+
+  public connect(): void {
+    this.connection = io('/');
+  }
+
+  // ... rest unchanged ...
+}
+```
+
+Update the build and start scripts in `package.json`.
+
+```json
+
+{
+  "name": "angular-multiplayer-reaction",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "nx": "nx",
+    "start": "node dist/apps/backend/main",
+    "build": "nx build --prod backend && nx build --prod frontend",
+    "test": "nx test",
+    "lint": "nx workspace-lint && nx lint",
+    "e2e": "nx e2e",
+    ...
+  }
+}
+```
+
+To test if that works out run
+
+```shell
+npm run build
+npm run start
+```
+
+and visit your browser at `http://localhost:3333`. Yes, that is not a 4200 after the colon. Our backend now serves the frontend, so both are available on the same port.
+
+Provided that you have put the app under version control, all that is left to do now for you to deploy the app is
+* registering with heroku
+* create an app via the web interface
+* target your github repo master branch for automatic builds
+
+
+
 ## Conclusion
 
 ### Next Steps
@@ -1545,3 +1654,8 @@ We accumulated a lot of technical debt on our way to a basic multiplayer game. A
 * Extract material imports into a library.
 * Modularize the frontend. Create a folder modules next to the components folder. In that folder create a folder dialogs/components. Now move all contens of the old app/components/dialogs into the folder app/modules/dialogs/components. Create a new file app/modules/dialogs/dialog.module.ts and declare all dialogs here. Remove the declaration of the dialogs from app/app.module.ts and instead import the new DialogModule and add it the imports array.
 * add a local storage service to the frontend app and persist the state of our app there. Create a mechanism to recover the app from the state snapshot in the localstorage. This allows users to re-enter the game after a page refresh.
+
+
+### Article TODOs
+
+* Move models/interfaces from tools/schematics into library.

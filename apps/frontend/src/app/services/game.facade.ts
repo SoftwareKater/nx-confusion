@@ -1,15 +1,10 @@
 import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-
 import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
 import {
   map,
   distinctUntilChanged,
-  switchMap,
-  startWith,
   tap,
-  delay,
-  debounceTime,
 } from 'rxjs/operators';
 import {
   Color,

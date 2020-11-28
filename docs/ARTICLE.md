@@ -2,12 +2,13 @@
 
 - [Creating a Multiplayer Game with Angular and Nestjs](#creating-a-multiplayer-game-with-angular-and-nestjs)
   - [Introduction](#introduction)
+    - [Tech Stack](#tech-stack)
     - [What This Is Not](#what-this-is-not)
     - [From the Idea to the Mockup to the Architecture](#from-the-idea-to-the-mockup-to-the-architecture)
     - [Set up Development Environment](#set-up-development-environment)
   - [Implementation](#implementation)
-    - [Dummy Backend and Dummy Frontend](#dummy-backend-and-dummy-frontend)
-    - [Joining Game (-Rooms)](#joining-game--rooms)
+    - [Creating Games](#creating-games)
+    - [Joining Games](#joining-games)
     - [Interacting with the Client](#interacting-with-the-client)
       - [Angular Material](#angular-material)
       - [Toolbar](#toolbar)
@@ -27,13 +28,20 @@
     - [Preparation for Deployment](#preparation-for-deployment)
   - [Conclusion](#conclusion)
     - [Next Steps](#next-steps)
-    - [Article TODOs](#article-todos)
+  - [Article TODOs](#article-todos)
 
 ## Introduction
 
 In this article you will see how to create a simple multiplayer game using Angular as the frontend technology and Nestjs for the backend. Everything will be wrapped into one single mono repository using NxDev, a cli that leverages the Angular cli. Socketio will help coping with the challenges that a real-time multiplayer game poses. Angular Material will save time on the frontend design.
 
 You find all the code that is discussed in this artikel (here on github)[https://github.com/SoftwareKater/nx-multiplayer-game]. Also, the app is (deployed to heroku)[https://nx-confusion-staging.herokuapp.com/]. Pay a visit to see what we are up to.
+### Tech Stack
+
+Nrwl Nx Workspace
+Angular 10
+Angular Material
+NestJs
+Socket.io
 
 ### What This Is Not
 
@@ -43,18 +51,15 @@ There will be no databases involved, so no persistence of any kinds of informati
 
 The game is a simple 2 player reaction game that is all about eye-hand coordination. It works as follows. Each player has four buttons - blue, yellow, purple, and red. A big label in the middle of the screen displays the name of one of these colors. The background color of this label is randomly chosen among the other colors. The players have to press the button matching the word (not the background color). Hitting the right button earns one point. Wrong clicks loose 2 points. The first one to receive a total of 10 points wins.
 
-TODO: (Show ui mockup here)
+<img src="mockup.svg" />
 
-TODO: (List a set of requirements here)
-* Users shall be able to interact with the UI via touch, clicks, and keyboard strokes.
-
-TODO: (Show architecture scetch here)
+<img src="architecture.svg" />
 
 ### Set up Development Environment
 
-For the next section you need to have a nx workspace with the angular and nestjs plugins up and running. If you know how to do this, you may well skip this section an move on to the next section. Just make sure that you have an nx workspace with a nestjs app and an angular app set up before you start the next section. Stay here if you want to learn how to bootstrap a mono repository with nxdev.
+For the next section you need to have a nx workspace with the angular and nestjs plugins up and running. If you know how to do this, you may well skip this section an move on to the next section. Just make sure that you have an nx workspace with a nestjs app and an angular app set up before you start the next section. Stay here if you want to learn how to bootstrap a mono repository with NxDev.
 
-Install node, verify that:
+Install node and verify the installation:
 
 ```shell
 λ npm --version
@@ -64,7 +69,7 @@ Install node, verify that:
 v14.15.0
 ```
 
-Install angular and nxdev
+Install Angular and NxDev
 
 ```shell
 λ npm i -g @angular/cli@10.0.0
@@ -77,7 +82,7 @@ Create a new nx workspace
 ```shell
 λ npx create-nx-workspace@latest
 npx: Installierte 182 in 16.475s
-? Workspace name (e.g., org name)     angular-multiplayer-reaction
+? Workspace name (e.g., org name)     nx-confusion
 ? What to create in the new workspace empty             [an empty workspace with a layout that works best for building apps]
 ? CLI to power the Nx workspace       Nx           [Recommended for all applications (React, Node, etc..)]
 ? Use Nx Cloud? (It's free and doesn't require registration.) No
@@ -109,7 +114,7 @@ Create the frontend app
 
 As a first step we will construct a simple backend that provides handlers for clients to connect and send messages. And a simple frontend that connects to the backend and sends some test messages.
 
-### Dummy Backend and Dummy Frontend
+### Creating Games
 
 Let's install some packages that we will need along the way.
 
@@ -129,8 +134,6 @@ Lay the foundation of our game module, where we handle everything related to the
 
 The gateway will serve as the entrance to our backend. Clients that connect or send messages to the backend will be served by the gateway.
 
-TODO: handleCreateGame should be async and gameService.createGame should return a promise and promisify the call of socket.join (the same is true for joinGame).
-
 ```typescript
 apps/backend/app/game/game.gateway.ts
 
@@ -149,11 +152,16 @@ export class GameGateway {
   constructor(private readonly gameService: GameService) {}
 
   @SubscribeMessage('create-game')
-  handleCreateGame(
+  async handleCreateGame(
     @ConnectedSocket() soc: Socket
-  ): WsResponse<CreateGameResponse> {
-    const result = this.gameService.createGame(soc);
-    return { event: 'game-created', data: result };
+  ): Promise<WsResponse<CreateGameResponse>> {
+    try {
+      const result = await this.gameService.createGame(soc);
+      return { event: 'game-created', data: result };
+    } catch (err) {
+      console.error(err);
+      return { event: 'error-creating', data: err.message };
+    }
   }
 }
 ```
@@ -170,25 +178,26 @@ import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class GameService {
-  public createGame(socket: Socket): CreateGameResponse {
+  public async createGame(socket: Socket): Promise<CreateGameResponse> {
     const roomId = uuid();
-    const player1Id = socket.id
-    socket.join(roomId, (err) => {
-      if (err) {
-        console.error(err);
-      } else {
-        console.log(`Successfully created new room ${roomId} and connected player1 ${player1Id}`);
-      }
+    const player1Id = socket.id;
+    return new Promise((resolve, reject) => {
+      socket.join(roomId, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log(
+            `Successfully created new room ${roomId} and connected player1 ${player1Id}`
+          );
+          resolve({ roomId, player1Id });
+        }
+      });
     });
-    return {
-        roomId,
-        player1Id,
-    }
   }
 }
 ```
 
-As you can see from the line `import { CreateGameResponse } from 'tools/schematics';` we keep the types at the common place `tools/schematics`. That folder was created when we first bootstrapped the nxDev mono repo.
+As you can see from the line `import { CreateGameResponse } from 'tools/schematics';` we keep the types at the common place `tools/schematics`. That folder was created when we first bootstrapped the NxDev mono repo.
 
 ```typescript
 tools/schematics/create-game-response.interface.ts
@@ -242,7 +251,7 @@ import { Component, OnInit } from '@angular/core';
 import { SocketService } from './socket.service';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-root',
+  selector: 'nx-confusion-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
@@ -272,7 +281,7 @@ Before we serve the apps, lets fix a warning that would otherwise pop up in our 
     },
     "root": "apps/frontend",
     "sourceRoot": "apps/frontend/src",
-    "prefix": "angular-multiplayer-reaction",
+    "prefix": "nx-confusion",
     "architect": {
       "build": {
         "builder": "@angular-devkit/build-angular:browser",
@@ -292,15 +301,15 @@ Now serve both the frontend and the backend. To do that open two console windows
 λ nx serve backend
 ```
 
-While keeping an eye on the backend console, open your browser at `http://localhost:4200`. Upon rendering the default nx dev welcome page (that we will soon erase), the backend console should log something like
+While keeping an eye on the console window where you started the backend, open your browser at `http://localhost:4200`. Upon rendering the default NxDev welcome page (that we will soon erase), the backend console should log something like
 
 ```shell
 Successfully created new room efa8fb98-6d2e-41d0-aadc-f99adac6563c and connected player1 366q_Ql0gJhMJ3AsAAAB
 ```
 
-Great! We conneted a frontend dummy to a backend dummy and already they already started to communicate. Lets dive deeper!
+Great! We conneted a frontend dummy to a backend dummy and they already started to communicate. Lets dive deeper!
 
-### Joining Game (-Rooms)
+### Joining Games
 
 This time we will start with the data structures. Joining a game requires a room number. So a request to join a game must provide that.
 
@@ -318,10 +327,10 @@ If a client joins a room he needs to now which name he goes by in that room. Als
 tools/schemas/join-game-response.interface.ts
 
 export interface JoinGameResponse {
-    roomId?: string;
-    player1Id?: string;
-    player2Id?: string;
-  }
+  roomId?: string;
+  player1Id?: string;
+  player2Id?: string;
+}
 ```
 
 We will build an in-memory storage to keep track of all games that we have created. This will also be the place to save the data that is manipulated by our backend (we do not want to handle scores in the client).
@@ -349,7 +358,7 @@ export * from './join-game-request.interface';
 export * from './join-game-response.interface';
 ```
 
-In the gateway, add a new handler and wrap execution of all handlers into a try-catch block.
+In the gateway, add a new handler.
 
 ```typescript
 apps/backend/app/game/game.gateway.ts
@@ -374,33 +383,36 @@ export class GameGateway {
   constructor(private readonly gameService: GameService) {}
 
   @SubscribeMessage('create-game')
-  handleCreateGame(
+  async handleCreateGame(
     @ConnectedSocket() soc: Socket
-  ): WsResponse<CreateGameResponse> {
+  ): Promise<WsResponse<CreateGameResponse>> {
     try {
-      const result = this.gameService.createGame(soc);
+      const result = await this.gameService.createGame(soc);
       return { event: 'game-created', data: result };
     } catch (err) {
+      console.error(err);
       return { event: 'error-creating', data: err.message };
     }
   }
 
   @SubscribeMessage('join-game')
-  handleJoinGame(
+  async handleJoinGame(
     @MessageBody() req: JoinGameRequest,
     @ConnectedSocket() soc: Socket
-  ): WsResponse<JoinGameResponse> {
+  ): Promise<WsResponse<JoinGameResponse>> {
     try {
-      const result = this.gameService.joinGame(req, soc);
+      const result = await this.gameService.joinGame(req, soc);
+      soc.broadcast.to(result.roomId).emit('player-joined', result);
       return { event: 'game-joined', data: result };
     } catch (err) {
+      console.error(err);
       return { event: 'error-joining', data: err.message };
     }
   }
 }
 ```
 
-Add the in-memory storage to the game service. Note that we now re-throw errors that occur in methods of the game service. All errors are handle on the top level in the gateway.
+Again the Add the in-memory storage to the game service.
 
 ```typescript
 apps/backend/app/game/game.service.ts
@@ -419,53 +431,57 @@ import { v4 as uuid } from 'uuid';
 export class GameService {
   public inMemoryStorage: GameData[] = [];
 
-  public createGame(socket: Socket): CreateGameResponse {
+  public async createGame(socket: Socket): Promise<CreateGameResponse> {
     const roomId = uuid();
     const player1Id = socket.id;
-    socket.join(roomId, (err) => {
-      if (err) {
-        throw err;
-      } else {
-        console.log(
-          `Successfully created new room ${roomId} and connected player1 ${player1Id}`
-        );
-      }
+    return new Promise((resolve, reject) => {
+      socket.join(roomId, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log(
+            `Successfully created new room ${roomId} and connected player1 ${player1Id}`
+          );
+          this.inMemoryStorage.push({ roomId, player1Id });   // added
+          resolve({ roomId, player1Id });
+        }
+      });
     });
-    this.inMemoryStorage.push({ roomId, player1Id });
-    return {
-      roomId,
-      player1Id,
-    };
   }
 
-  public joinGame(request: JoinGameRequest, socket: Socket): JoinGameResponse {
+  public async joinGame(
+    request: JoinGameRequest,
+    socket: Socket
+  ): Promise<JoinGameResponse> {
     const roomId = request.roomId;
     const player2Id = socket.id;
-    const gameIdx = this.inMemoryStorage.findIndex((g) => g.roomId === roomId);
+    const gameIdx = this.inMemoryStorage.find(game => game.roomId === roomId);
     if (gameIdx <= 0) {
       throw new Error('RoomNotFound');
     }
     const player1Id = this.inMemoryStorage[gameIdx].player1Id;
-    socket.join(roomId, (err) => {
-      if (err) {
-        throw err;
-      } else {
-        this.inMemoryStorage[gameIdx].player2Id = player2Id;
-        console.log(
-          `Successfully connected player2 ${player2Id} to existing room ${roomId}`
-        );
-      }
+    return new Promise((resolve, reject) => {
+      socket.join(roomId, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log(
+            `Successfully connected player2 ${player2Id} to existing room ${roomId}`
+          );
+          this.inMemoryStorage[gameIdx].player2Id = player2Id;
+          resolve({
+            roomId,
+            player1Id,
+            player2Id,
+          });
+        }
+      });
     });
-    return {
-      roomId,
-      player1Id,
-      player2Id,
-    };
   }
 }
 ```
 
-Lets try out our new joining functionality, by creating the counterparts in our client. Add event handlers to the socket connection using `this.connection.on(event: string, (res) => void)`. Add a `joinGame` method that emits the `join-game` event and sends the required message body.
+Lets try out our new joining functionality, by creating the counterparts in our client. Add event handlers to the socket connection using `this.connection.on(event: string, (res: any) => void)`. Add a `joinGame` method that emits the `join-game` event and sends the required message body.
 
 ```typescript
 apps/frontend/src/app/socket.service.ts
@@ -520,11 +536,11 @@ ngOnInit() {
 }
 ```
 
-Goto the browser tab, where the app is running and open the developer tools (F12). If you refresh you browser you will see one ACK and one error. The game creation succeeded, and in the corresponding ACK we can find our roomId and our player1Id, which is our `socket.id`. Since we created the game, we are automatically assigned as player 1. Joining the game however failed, because we joined the game that takes place in the room `hello`. But this room does not exists, therefore joining the game had all the rights to fail.
+Goto the browser tab, where the app is running and open the developer tools. If you refresh you browser you will see one acknowledgement message and one error. The game creation succeeded, and in the corresponding ACK we can find the roomId and the id of player 1. Since we created the game, we are automatically assigned as player 1. Joining the game however failed, because we tried to join a game that takes place in a room with id `hello`. But there is no room with that id, therefore joining the game had all the rights to fail.
 
 ### Interacting with the Client
 
-We have made a huge step. Our client-server (frontend-backend) communcation now works both ways. The client emits events, to trigger the server. The server reacts and in turn sends events back to the client. The client again consumes the returned events and prints them to console. However, this is all static and we as a user cannot interact in the client-server communication. So before turning to the game logic, lets put a little work into our UI. In this section we will create the overall layout and menu items.
+We have made a huge step. Our client-server (frontend-backend) communcation now works both ways. The client emits events, to trigger the server. The server reacts and in turn sends events back to the client. The client again consumes the returned events and prints them to console. However, this is all static and we as a user cannot interact in the client-server communication. So before turning to the game logic, lets put a little work into the user interface. In this section we will create the overall layout and menu items.
 
 #### Angular Material
 
@@ -536,10 +552,10 @@ Add one of the prebuilt themes to styles array in `workspace.json`. It is a sibl
 
 ```json
 
-  "styles": [
-    "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
-    "apps/frontend/src/styles.scss"
-  ],
+"styles": [
+  "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
+  "apps/frontend/src/styles.scss"
+],
 ```
 
 Update the `index.html` with the material design icon font.
@@ -558,12 +574,12 @@ Update the `index.html` with the material design icon font.
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   </head>
   <body class="mat-typography">
-    <angular-multiplayer-reaction-root></angular-multiplayer-reaction-root>
+    <nx-confusion-root></nx-confusion-root>
   </body>
 </html>
 ```
 
-Delete the contents of `app.component.html` and `app.component.scss`. Update `styles.scss`.
+Delete the contents of `app.component.html` and `app.component.scss`. Update `styles.scss` with the following definitions.
 
 ```scss
 html,
@@ -579,13 +595,7 @@ body {
 
 #### Toolbar
 
-Now we are ready to start working on the user interface. Create a toolbar component in a new `components` folder
-
-```shell
-nx g @nrwl/angular:component --project=frontend components/toolbar
-```
-
-Create a toolbar holding the title of the app and a menu.
+Now we are ready to start working on the user interface. Create a toolbar component in a new `components` folder. It will show the title of the app and a menu.
 
 ```html
 frontend/src/app/components/toolbar/toolbar.component.html
@@ -624,7 +634,7 @@ frontend/src/app/components/toolbar/toolbar.component.ts
 import { Component } from '@angular/core';
 
 @Component({
-    selector: 'angular-multiplayer-reaction-toolbar',
+    selector: 'nx-confusion-toolbar',
     templateUrl: 'toolbar.component.html'
 })
 
@@ -646,7 +656,7 @@ export class ToolbarComponent {
 Add the new component to `app.component.html`
 
 ```html
-<angular-multiplayer-reaction-toolbar></angular-multiplayer-reaction-toolbar>
+<nx-confusion-toolbar></nx-confusion-toolbar>
 ```
 
 In order to make everything work, we have to import all the material stuff that we are using.
@@ -684,7 +694,7 @@ At this point you can fire up the apps again and check out our new UI.
 
 #### Dialogs
 
-We will use modal dialogs to communicate with the user. All the entries in the menu will show a different dialog. The "how to"-dialog will show a small text on how to create/join games and how to play. The "create game"-dialog will eventually call the `createGame` method of our socket service. Likewise the "join game"-dialog will call the `joinGame` method, but moreover it will display an input field so that the user can enter the room id.
+We will use modal dialogs to communicate with the user. All the entries in the menu will show a different dialog. The "how to"-dialog will show a small text about the game and on how to create and join games. The "create game"-dialog will eventually call the `createGame` method of our socket service. Likewise the "join game"-dialog will call the `joinGame` method. Moreover it will display an input field so that the user can enter the id of the room that he wants to join.
 
 Create a new folder `components/dialogs` where we keep all the dialogs we are about to create. Inside that create a new folder `how-to` and add the following two files
 
@@ -704,7 +714,7 @@ frontend/src/app/components/dialogs/how-to/how-to.dialog.component.ts
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-how-to-dialog',
+  selector: 'nx-confusion-how-to-dialog',
   templateUrl: 'how-to.dialog.component.html',
 })
 export class HowToDialogComponent {}
@@ -722,7 +732,58 @@ public onHowTo() {
 
 Here are the other two dialogs.
 
-TODO: add dialog code here
+```html
+frontend/src/app/components/dialogs/create-game/create-game.dialog.component.html
+
+<h1 mat-dialog-title>Create Game</h1>
+<div mat-dialog-content>
+  If you create a new game, you will be provided a room id. Pass this room id to a friend you want to play with.
+</div>
+<div mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="false">Cancel</button>
+  <button mat-button mat-raised-button [mat-dialog-close]="true">Create</button>
+</div>
+```
+
+```typescript
+frontend/src/app/components/dialogs/create-game/create-game.dialog.component.ts
+
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'angular-multiplayer-reaction-create-game-dialog',
+  templateUrl: 'create-game.dialog.component.html',
+})
+export class CreateGameDialogComponent {}
+```
+
+```html
+frontend/src/app/components/dialogs/join-game/join-game.dialog.component.html
+
+<h1 mat-dialog-title>Join Game</h1>
+<div mat-dialog-content>
+  <mat-form-field>
+    <mat-label>Room ID</mat-label>
+    <input matInput placeholder="605e0ee1-945e-42f4-9282-9c57ce2bb787" #roomId>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions>
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-button [mat-dialog-close]="roomId.value" cdkFocusInitial>Join</button>
+</div>
+```
+
+```typescript
+frontend/src/app/components/dialogs/join-game/join-game.dialog.component.ts
+
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'angular-multiplayer-reaction-join-game-dialog',
+  templateUrl: 'join-game.dialog.component.html',
+})
+export class JoinGameDialogComponent {}
+```
 
 Delete everything but the connect call from the app components OnInit method.
 
@@ -738,7 +799,7 @@ To test our new UI, open two browser tabs at `http://localhost:4200`. In the fir
 
 #### Snack Bars
 
-We will use snack bars to notify the user about the different steps of the process of creating and joining a game. First of all, after creating a new game, the user should be given the room ID and should be supplied with an easy method to copy this room ID. Moreover the joining user should receive a notification when she successfully connected to the game. The creator on the other hand should receive a notification if another user joins his game room.
+We will use snack bars to inform the user about the different steps of the process of creating and joining a game. First of all, after creating a new game, the user should be given the room ID and should be supplied with an easy method to copy this room ID. Moreover the joining user should receive a notification when she successfully connected to the game. The creator on the other hand should receive a notification if another user joins his game room.
 
 The snack bar that notifies the joining player about a successful connection is an easy one. Just open a snackbar containing a success message during the callback on `game-joined` events.
 
@@ -756,7 +817,7 @@ public connect(): void {
 }
 ```
 
-For the game created snackbar lets create a new folder snackbars next to dialogs and add a new component `game-created.snackbar.component` there.
+For the game created snackbar lets create a new folder `snackbars` next to `dialogs` and add a new component `game-created.snackbar.component` there.
 
 ```html
 frontend/src/app/components/snackbars/game-created/game-created.snackbar.component.html
@@ -773,7 +834,7 @@ import { Component } from '@angular/core';
 import { MAT_SNACK_BAR_DATA, MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-game-created-snackbar',
+  selector: 'nx-confusion-game-created-snackbar',
   templateUrl: 'game-created.snackbar.component.html',
 })
 export class GameCreatedSnackbarComponent {
@@ -788,7 +849,7 @@ export class GameCreatedSnackbarComponent {
   }
 }
 ```
-Our solution to copy the room ID to the clipboard will only work in newer browsers. If you want to support a bigger range of browsers have a look at this SO https://stackoverflow.com/questions/400212/how-do-i-copy-to-the-clipboard-in-javascript.
+Our solution to copy the room ID to the clipboard will only work in newer browsers. If you want to support a bigger range of browsers have a look at (this)[https://stackoverflow.com/questions/400212/how-do-i-copy-to-the-clipboard-in-javascript].
 
 To wire the new snackbar to the `game-created` event, open it in the callback. Don't forget to declare the new snackbar component in our app module.
 
@@ -848,20 +909,15 @@ handleJoinGame(
 }
 ```
 
-
 ### Game Facade
 
-We have set up the general layout to create a game inside it. Before we dive into game play, lets lay a foundation with a little refactoring. We already cramed our app module with all those material imports and dialog declarations. Lets keep the template, style sheet and typescript of our app component to a minimum. But we do need a container to orchestrate all our components. To this end create a main component.
-
-```shell
-ng g c components/main
-```
+We have set up the general layout to create a game inside it. Before we dive into game play, lets lay a foundation with a little refactoring. We already cramed our app module with all those material imports and dialog declarations. Lets keep the template, style sheet and typescript of our app component to a minimum. But we do need a container to orchestrate all our components. As shown in the architecture diagram, that purpose will be served by the main component.
 
 ```html
-main.component.ts
+frontend/src/app/components/main/main.component.html
 
 <div class="header">
-  <angular-multiplayer-reaction-toolbar></angular-multiplayer-reaction-toolbar>
+  <nx-confusion-toolbar></nx-confusion-toolbar>
 </div>
 
 <div class="content">
@@ -869,7 +925,7 @@ main.component.ts
 ```
 
 ```scss
-main.component.scss
+frontend/src/app/components/main/main.component.scss
 
 .header {
   margin-bottom: 16px;
@@ -884,21 +940,21 @@ app.component.ts
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-root',
+  selector: 'nx-confusion-root',
   template: `
-    <angular-multiplayer-reaction-main> </angular-multiplayer-reaction-main>
+    <nx-confusion-main></nx-confusion-main>
   `,
 })
 export class AppComponent {}
 ```
 
-You may have noticed that we broke our menu functions create and join game. That happend when we deleted the OnInit method in app.component.ts, because this was the place where the initial socket connection was created. But don't worry we will fix this right now.
+You may have noticed that we broke our menu functions create and join game. That happend because we deleted the `ngOnInit` method in `app.component.ts`. That was the place where the initial socket connection was created. But don't worry we will fix this right now.
 
-The architecture that we will now apply in the frontend is called "push-based". And the heart of this architecture is a so called facade. As you can see in our architecture diagram at the beginning, the facade is a layer between the components (UI) and the services (logic). So its most basic functionality is abstracting the service layer from the components, thus it will be easier for example to change (or exchange) the services.
+The architecture that we will now apply in the frontend is called "push-based". And at the heart of this architecture is a so called facade. As you can see from the architecture diagram, the facade is a layer between the components (UI) and the services (logic). So its most basic functionality is abstracting the service layer from the components, thus it will be easier for example to change (or exchange) the services.
 
 Apart from this architectural feature, the facade manages the state of our frontend app. State is what makes frontend apps user-friendly and our app certainly can employ some form of state management. Moreover our components will not have to pull changes from the services manually or even ask services whether there are changes that should be reflected by re-rendering the UI. Instead the facade will push new changes into the components whenever the state of our app changes.
 
-If you want to learn more about this great architecture head over to https://thomasburlesonia.medium.com/push-based-architectures-with-rxjs-81b327d7c32d and https://thomasburlesonia.medium.com/ngrx-facades-better-state-management-82a04b9a1e39.
+If you want to learn more about this great architecture head over to (this)[https://thomasburlesonia.medium.com/push-based-architectures-with-rxjs-81b327d7c32d] and (that)[https://thomasburlesonia.medium.com/ngrx-facades-better-state-management-82a04b9a1e39] article of Thomas Burleson.
 
 Create a new file game.facade.ts with the following content.
 
@@ -906,31 +962,45 @@ frontend/src/app/game.facade.ts
 ```typescript
 
 import { Injectable } from '@angular/core';
-
 import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
 import {
   map,
   distinctUntilChanged,
-  switchMap,
-  startWith,
   tap,
-  delay,
-  debounceTime,
 } from 'rxjs/operators';
-import { Color, CreateGameResponse, GameData } from 'tools/schematics';
-import { SocketService } from './socket.service';
+import {
+  Color,
+  CreateGameResponse,
+  GameData,
+  GameScore,
+  GameState,
+  JoinGameResponse,
+} from 'tools/schematics';
+
+let STATE: GameState = {
+  task: null,
+  playerMove: null,
+  score: null,
+  loading: true,
+};
 
 @Injectable({ providedIn: 'root' })
 export class GameFacade {
+  private roomId: string;
+  private playerId: string;
   private store = new BehaviorSubject<GameState>(STATE);
   private state$ = this.store.asObservable();
 
-  score$ = this.state$.pipe(
-    map((state) => state.score),
+  task$ = this.state$.pipe(
+    map((state) => state.task),
     distinctUntilChanged()
   );
   playerMove$ = this.state$.pipe(
     map((state) => state.playerMove),
+    distinctUntilChanged()
+  );
+  score$ = this.state$.pipe(
+    map((state) => state.score),
     distinctUntilChanged()
   );
   loading$ = this.state$.pipe(map((state) => state.loading));
@@ -939,27 +1009,31 @@ export class GameFacade {
    * Viewmodel that resolves once all the data is ready (or updated)...
    */
   public viewModel$: Observable<GameState> = combineLatest([
+    this.task$,
     this.playerMove$,
     this.score$,
     this.loading$,
   ]).pipe(
-    map(([playerMove, score, loading]) => {
-      return { playerMove, score, loading };
+    map(([task, playerMove, score, loading]) => {
+      return { task, playerMove, score, loading };
     })
   );
 
   /**
    * Watch streams to trigger backend communication and state updates
    */
-  constructor(private readonly socketService: SocketService) {
+  constructor() {
     this.playerMove$
       .pipe(
-        map((playerMove) => {
-          console.log(playerMove);
+        tap((playerMove: Color) => {
+          if (playerMove) {
+            console.log(playerMove);
+          }
         })
       )
       .subscribe(() => {
-        this.updateState({ ...STATE, loading: false });
+        const playerMove = null;
+        this.updateState({ ...STATE, playerMove, loading: false });
       });
   }
 
@@ -974,13 +1048,8 @@ export class GameFacade {
     return { ...STATE, score: { ...STATE.score } };
   }
 
-  public updateScore(newScore: GameScore): void {
-    const score = {
-      ...STATE.score,
-      player1: newScore.player1,
-      player2: newScore.player2,
-    };
-    this.updateState({ ...STATE, score, loading: false });
+  public updatePlayerMove(playerMove: Color): void {
+    this.updateState({ ...STATE, playerMove, loading: true });
   }
 
   /** Update internal state cache and emit from store... */
@@ -988,15 +1057,28 @@ export class GameFacade {
     this.store.next((STATE = state));
   }
 }
+
+}
 ```
 
 As you can see in the `init` method, now the game facade is reponsible for creating the socket connection. The app component will in turn trigger the game facade.
 
-frontend/src/app/app.component.ts
+frontend/src/app/main.component.ts
 ```typescript
 
-export class AppComponent implements OnInit {
+import { Component, OnInit } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Color, GameState } from 'tools/schematics';
+import { GameFacade } from '../../services/game.facade';
+
+@Component({
+  selector: 'nx-confusion-main',
+  templateUrl: 'main.component.html',
+  styleUrls: ['main.component.scss'],
+})
+export class MainComponent implements OnInit {
   constructor(private readonly gameFacade: GameFacade) {}
+
   ngOnInit() {
     this.gameFacade.init();
   }
@@ -1007,6 +1089,7 @@ Add the method `createHandler` to the socket service. It allows to create event 
 
 ```typescript
 
+
 public createHandler(event: string, callback: (res: any) => void): void {
   this.connection.on(event, callback);
 }
@@ -1016,6 +1099,10 @@ Create a new function `createHandlers` in the game facade. Copy all lines but th
 
 frontend/src/app/game.facade.ts
 ```typescript
+
+constructor(private snackBar: MatSnackBar) {
+  // ...
+}
 
 private createHandlers() {
   this.socketService.createHandler(
@@ -1049,6 +1136,8 @@ private createHandlers() {
   });
 }
 ```
+
+At this point the point all functionalities of the frontend should work again.
 
 ### Game Logic
 
@@ -1338,17 +1427,13 @@ Before we connect the frontend to the refined backend, lets work on the UI again
 
 #### Score Board
 
-```shell
-ng g c components/score-board
-```
-
 ```typescript
 apps/frontend/src/app/components/score-board/score-board.component.ts
 
 import { GameScore } from 'tools/schematics';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-score-board',
+  selector: 'nx-confusion-score-board',
   templateUrl: 'score-board.component.html',
   styleUrls: ['score-board.component.scss'],
 })
@@ -1414,7 +1499,7 @@ import { GameTask } from 'tools/schematics';
 import { ColorCodeMap } from '../../constants';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-game-screen',
+  selector: 'nx-confusion-game-screen',
   templateUrl: 'game-screen.component.html',
   styleUrls: ['game-screen.component.scss'],
 })
@@ -1463,17 +1548,38 @@ game-screen.component.scss
 
 #### Button Panel
 
-```shell
-ng g c components/button-panel
+```typescript
+button-panel.component.ts
+
+import { Component, EventEmitter, Output } from '@angular/core';
+import { Color } from 'tools/schematics';
+
+@Component({
+  selector: 'nx-confusion-button-panel',
+  templateUrl: 'button-panel.component.html',
+  styleUrls: ['button-panel.component.scss'],
+})
+export class ButtonPanelComponent {
+  @Output() buttonPressed = new EventEmitter<Color>();
+
+  public get color(): typeof Color {
+    return Color;
+  }
+
+  public onClick(color: Color) {
+    console.log(color);
+    this.buttonPressed.emit(color);
+  }
+}
 ```
 
 ```html
 button-panel.component.html
 
-<button mat-button id="red-button">Q</button>
-<button mat-button id="yellow-button">W</button>
-<button mat-button id="blue-button">E</button>
-<button mat-button id="purple-button">R</button>
+<button mat-button id="red-button" (click)="onClick(color.Red)">Q</button>
+<button mat-button id="yellow-button" (click)="onClick(color.Yellow)">W</button>
+<button mat-button id="blue-button" (click)="onClick(color.Blue)">E</button>
+<button mat-button id="purple-button" (click)="onClick(color.Purple)">R</button>
 ```
 
 TODO: Colors should be defined at one point only (ssot)
@@ -1517,26 +1623,157 @@ Now we can use all these new ui components in the main component.
 
 ```html
 <div class="header">
-  <angular-multiplayer-reaction-toolbar></angular-multiplayer-reaction-toolbar>
+  <nx-confusion-toolbar></nx-confusion-toolbar>
 </div>
 
 <div class="content">
-  <angular-multiplayer-reaction-score-board
+  <nx-confusion-score-board
     [score]="{ player1: 3, player2: 8 }"
-  ></angular-multiplayer-reaction-score-board>
+  ></nx-confusion-score-board>
 
-  <angular-multiplayer-reaction-game-screen
+  <nx-confusion-game-screen
     [task]="{ label: 'Red', background: 'Yellow' }"
-  ></angular-multiplayer-reaction-game-screen>
+  ></nx-confusion-game-screen>
 
-  <angular-multiplayer-reaction-button-panel></angular-multiplayer-reaction-button-panel>
+  <nx-confusion-button-panel (buttonPressed)="onButtonPressed($event)"></nx-confusion-button-panel>
 </div>
 ```
 
+To react to button clicks, add the following method to the typescript file of the main component
+```typescript
+public onButtonPressed($event: Color) {
+  console.log($event);
+}
+```
+
+If you run the frontend now, you should see a static UI. The score board shows 3 to 8 for player 2, the game screen shows the word 'RED' on a yellow background.
 
 ### Wireing the UI to the Logic
 
-With our super fancy game facade in place, wireing our UI to the new logic parts is really easy.
+With our super fancy game facade in place, wireing our UI to the new logic parts is really easy. Another reason that this is so easy is, that only the main component talks with the game facade. The ui components like score board and button panel, however, are "dumb". The generally do not talk to services but recieve information via `@Input()` properties and supply information via `@Output()` properties.
+
+```typescript
+game.facade.ts
+
+import { Injectable } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
+import {
+  map,
+  distinctUntilChanged,
+  tap,
+} from 'rxjs/operators';
+import {
+  Color,
+  CreateGameResponse,
+  GameData,
+  GameScore,
+  GameState,
+  JoinGameResponse,
+} from 'tools/schematics';
+import { SocketService } from './socket.service';
+import { GameCreatedSnackbarComponent } from '../components/snackbars/game-created/game-created.snackbar.component';
+
+let STATE: GameState = {
+  task: null,
+  playerMove: null,
+  score: null,
+  loading: true,
+};
+
+@Injectable({ providedIn: 'root' })
+export class GameFacade {
+  // ...
+
+  /**
+   * Watch streams to trigger backend communication and state updates
+   */
+  constructor(
+    private snackBar: MatSnackBar,
+    private readonly socketService: SocketService
+  ) {
+    this.playerMove$
+      .pipe(
+        tap((playerMove: Color) => {
+          if (playerMove) {
+            this.socketService.playerMove(
+              playerMove,
+              this.roomId,
+              this.playerId
+            );
+          }
+        })
+      )
+      .subscribe(() => {
+        const playerMove = null;
+        this.updateState({ ...STATE, playerMove, loading: false });
+      });
+  }
+
+  public init() {
+    // ...
+  }
+
+  // Allows quick snapshot access to data for ngOnInit() purposes
+  public getStateSnapshot(): GameState {
+    return { ...STATE, score: { ...STATE.score } };
+  }
+
+  public updatePlayerMove(playerMove: Color): void {
+    this.updateState({ ...STATE, playerMove, loading: true });
+  }
+
+  private createHandlers() {
+    // ...
+    this.socketService.createHandler('new-score', (res: GameData) => {
+      const score = {
+        ...STATE.score,
+        player1: res.player1Score,
+        player2: res.player2Score,
+      };
+      this.updateState({ ...STATE, score, loading: false });
+    });
+    this.socketService.createHandler('new-task', (res: GameData) => {
+      this.updateState({ ...STATE, task: res.task, loading: false });
+    });
+  }
+
+  /** Update internal state cache and emit from store... */
+  private updateState(state: GameState) {
+    this.store.next((STATE = state));
+  }
+}
+```
+
+```html
+main.component.html
+
+<div class="header">
+  <nx-confusion-toolbar></nx-confusion-toolbar>
+</div>
+
+<div class="content">
+  <div *ngIf="vm$ | async as vm">
+    <nx-confusion-score-board
+      [score]="vm.score"
+    ></nx-confusion-score-board>
+
+    <nx-confusion-game-screen
+      [task]="vm.task"
+    ></nx-confusion-game-screen>
+
+    <nx-confusion-button-panel (buttonPressed)="onButtonPressed($event)"></nx-confusion-button-panel>
+  </div>
+</div>
+```
+
+```typescript
+main.component.ts
+
+public onButtonPressed($event: Color) {
+  this.gameFacade.updatePlayerMove($event);
+}
+```
 
 ### Win Condition
 
@@ -1646,16 +1883,21 @@ Provided that you have put the app under version control, all that is left to do
 
 ### Next Steps
 
-We accumulated a lot of technical debt on our way to a basic multiplayer game. A refactoring will help to add new features to the app. Ideas for refactorings include:
+We accumulated a lot of technical debt on our way to a basic multiplayer game. A refactoring will help to add new features to the app.
+
+Ideas for Refactorings include:
 * Extract the in-memory storage from the game service and create a dedicated service for the in-memory storage.
-* Divide the game service and gateway along its two purposes: managing rooms (createGame, joinGame), managing games (...). Before you do this, you should definetly extract the in-memory storage.
-* Users can join their own room. After player 2 joined, the room should be closed for new connections. Curretly player 2 users can be kicked out by other joining users.
-* Build data structures for all variables that currently have the type `any`.
+* Divide both the game service and gateway along their two purposes: managing rooms (createGame, joinGame), managing games (...). Before you do this, you should definetly extract the in-memory storage.
 * Extract material imports into a library.
 * Modularize the frontend. Create a folder modules next to the components folder. In that folder create a folder dialogs/components. Now move all contens of the old app/components/dialogs into the folder app/modules/dialogs/components. Create a new file app/modules/dialogs/dialog.module.ts and declare all dialogs here. Remove the declaration of the dialogs from app/app.module.ts and instead import the new DialogModule and add it the imports array.
-* add a local storage service to the frontend app and persist the state of our app there. Create a mechanism to recover the app from the state snapshot in the localstorage. This allows users to re-enter the game after a page refresh.
 
 
-### Article TODOs
+Ideas for Fixes and Features:
+* After player 2 joined a room, the room should be closed for new connections. Curretly player 2 users can be kicked out by other joining users.
+* Add a local storage service to the frontend app and persist the state of our app there. Create a mechanism to recover the app from the state snapshot in the localstorage. This allows users to re-enter the game after a page refresh.
+* Currently the game runs infinitely long, because there is no win condition. Introduce a win condition either score based or time based.
+
+## Article TODOs
 
 * Move models/interfaces from tools/schematics into library.
+* Build data structures for all variables that currently have the type `any`.

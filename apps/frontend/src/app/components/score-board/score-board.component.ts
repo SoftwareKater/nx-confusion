@@ -1,5 +1,5 @@
+import { GameScore } from '@angular-multiplayer-reaction/types';
 import { Component, Input } from '@angular/core';
-import { GameScore } from 'tools/schematics';
 
 @Component({
   selector: 'angular-multiplayer-reaction-score-board',

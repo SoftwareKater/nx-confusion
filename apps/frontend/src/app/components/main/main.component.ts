@@ -1,6 +1,6 @@
+import { Color, GameState } from '@angular-multiplayer-reaction/types';
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Color, GameState } from 'tools/schematics';
 import { GameFacade } from '../../services/game.facade';
 
 @Component({

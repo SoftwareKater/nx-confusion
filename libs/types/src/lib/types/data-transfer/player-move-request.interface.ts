@@ -1,4 +1,4 @@
-import { Color } from './color.enum';
+import { Color } from '../..';
 
 export interface PlayerMoveRequest {
   roomId: string;

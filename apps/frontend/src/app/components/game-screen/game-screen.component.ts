@@ -1,5 +1,5 @@
+import { GameTask } from '@angular-multiplayer-reaction/types';
 import { Component, Input } from '@angular/core';
-import { GameTask } from 'tools/schematics';
 import { ColorCodeMap } from '../../constants';
 
 @Component({

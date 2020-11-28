@@ -1,5 +1,5 @@
+import { Color } from '@angular-multiplayer-reaction/types';
 import { Component, EventEmitter, Output } from '@angular/core';
-import { Color } from 'tools/schematics';
 
 @Component({
   selector: 'angular-multiplayer-reaction-button-panel',

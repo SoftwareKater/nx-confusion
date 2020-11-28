@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import * as io from 'socket.io-client';
 import {
   Color,
+  GameEvent,
   JoinGameRequest,
   PlayerMoveRequest,
   StartGameRequest,
-} from 'tools/schematics';
+} from '@angular-multiplayer-reaction/types';
 
 @Injectable({ providedIn: 'root' })
 export class SocketService {
@@ -35,21 +36,21 @@ export class SocketService {
   }
 
   public createGame(): void {
-    this.connection.emit('create-game');
+    this.connection.emit(GameEvent.CreateGame);
   }
 
   public joinGame(roomId: string): void {
     const req: JoinGameRequest = { roomId };
-    this.connection.emit('join-game', req);
+    this.connection.emit(GameEvent.JoinGame, req);
   }
 
   public startGame(roomId: string): void {
     const req: StartGameRequest = { roomId };
-    this.connection.emit('start-game', req);
+    this.connection.emit(GameEvent.StartGame, req);
   }
 
   public playerMove(color: Color, roomId: string, playerId: string): void {
     const req: PlayerMoveRequest = { color, roomId, playerId };
-    this.connection.emit('player-move', req);
+    this.connection.emit(GameEvent.PlyerMove, req);
   }
 }

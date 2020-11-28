@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
 import { map, distinctUntilChanged, tap } from 'rxjs/operators';
+import { SocketService } from './socket.service';
+import { GameCreatedSnackbarComponent } from '../components/snackbars/game-created/game-created.snackbar.component';
 import {
   Color,
   CreateGameResponse,
@@ -9,9 +11,7 @@ import {
   GameScore,
   GameState,
   JoinGameResponse,
-} from 'tools/schematics';
-import { SocketService } from './socket.service';
-import { GameCreatedSnackbarComponent } from '../components/snackbars/game-created/game-created.snackbar.component';
+} from '@angular-multiplayer-reaction/types';
 
 let STATE: GameState = {
   task: null,

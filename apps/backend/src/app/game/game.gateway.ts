@@ -7,14 +7,14 @@ import {
   WsResponse,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
+import { GameService } from './game.service';
 import {
   CreateGameResponse,
   JoinGameRequest,
   JoinGameResponse,
   PlayerMoveRequest,
   StartGameRequest,
-} from 'tools/schematics';
-import { GameService } from './game.service';
+} from '@angular-multiplayer-reaction/types';
 
 @WebSocketGateway()
 export class GameGateway {
@@ -55,9 +55,7 @@ export class GameGateway {
   }
 
   @SubscribeMessage('start-game')
-  handleStartGame(
-    @MessageBody() req: StartGameRequest
-  ): WsResponse<unknown> {
+  handleStartGame(@MessageBody() req: StartGameRequest): WsResponse<unknown> {
     try {
       const result = this.gameService.startGame(req.roomId);
       this.server.to(req.roomId).emit('new-task', result);
@@ -69,9 +67,7 @@ export class GameGateway {
   }
 
   @SubscribeMessage('player-move')
-  handlePlayerMove(
-    @MessageBody() req: PlayerMoveRequest,
-  ): WsResponse<unknown> {
+  handlePlayerMove(@MessageBody() req: PlayerMoveRequest): WsResponse<unknown> {
     try {
       const result = this.gameService.playerMove(
         req.roomId,
@@ -80,9 +76,9 @@ export class GameGateway {
       );
       if (result.match) {
         this.server.to(req.roomId).emit('new-task', result);
-        this.server.to(req.roomId).emit('new-score', result)
+        this.server.to(req.roomId).emit('new-score', result);
       } else {
-        this.server.to(req.roomId).emit('new-score', result)
+        this.server.to(req.roomId).emit('new-score', result);
       }
     } catch (err) {
       console.error(err);

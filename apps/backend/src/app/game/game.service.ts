@@ -1,5 +1,3 @@
-import { Injectable } from '@nestjs/common';
-import { Socket } from 'socket.io';
 import {
   Color,
   CreateGameResponse,
@@ -7,7 +5,9 @@ import {
   GameTask,
   JoinGameRequest,
   JoinGameResponse,
-} from 'tools/schematics';
+} from '@angular-multiplayer-reaction/types';
+import { Injectable } from '@nestjs/common';
+import { Socket } from 'socket.io';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()

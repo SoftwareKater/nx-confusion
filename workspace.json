@@ -65,9 +65,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "allowedCommonJsDependencies": [
-              "socket.io-client"
-            ],
+            "allowedCommonJsDependencies": ["socket.io-client"],
             "outputPath": "dist/apps/frontend",
             "index": "apps/frontend/src/index.html",
             "main": "apps/frontend/src/main.ts",
@@ -175,6 +173,27 @@
           "options": {
             "tsConfig": ["apps/frontend-e2e/tsconfig.e2e.json"],
             "exclude": ["**/node_modules/**", "!apps/frontend-e2e/**/*"]
+          }
+        }
+      }
+    },
+    "types": {
+      "root": "libs/types",
+      "sourceRoot": "libs/types/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/types/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/types/jest.config.js",
+            "passWithNoTests": true
           }
         }
       }

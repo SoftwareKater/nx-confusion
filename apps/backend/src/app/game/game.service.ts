@@ -45,9 +45,6 @@ export class GameService {
         if (err) {
           reject(err);
         } else {
-          console.log(
-            `Successfully connected player2 ${player2Id} to existing room ${roomId}`
-          );
           this.inMemoryStorage[gameIdx].player2Id = player2Id;
           resolve({
             roomId,
@@ -66,7 +63,6 @@ export class GameService {
       game.task = this.createTask();
       game.player1Score = 0;
       game.player2Score = 0;
-      console.log(game);
       return game;
     } else {
       throw new Error('NotEnoughPlayers');

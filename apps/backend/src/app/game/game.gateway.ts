@@ -44,6 +44,9 @@ export class GameGateway {
     try {
       const result = await this.gameService.joinGame(req, soc);
       soc.broadcast.to(result.roomId).emit('player-joined', result);
+      console.log(
+        `Successfully connected player2 ${result.player2Id} to room ${result.roomId}`
+      );
       return { event: 'game-joined', data: result };
     } catch (err) {
       console.error(err);
@@ -58,6 +61,7 @@ export class GameGateway {
     try {
       const result = this.gameService.startGame(req.roomId);
       this.server.to(req.roomId).emit('new-task', result);
+      console.log(`Successfully started a game in room ${result.roomId}`);
     } catch (err) {
       console.error(err);
       return { event: 'error-starting', data: err.message };

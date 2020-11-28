@@ -10,6 +10,7 @@ import { Socket, Server } from 'socket.io';
 import { GameService } from './game.service';
 import {
   CreateGameResponse,
+  GameEvent,
   JoinGameRequest,
   JoinGameResponse,
   PlayerMoveRequest,
@@ -29,6 +30,9 @@ export class GameGateway {
   ): Promise<WsResponse<CreateGameResponse>> {
     try {
       const result = await this.gameService.createGame(soc);
+      console.log(
+        `Successfully created new room ${result.roomId} and connected player1 ${result.player1Id}`
+      );
       return { event: 'game-created', data: result };
     } catch (err) {
       console.error(err);
@@ -74,6 +78,9 @@ export class GameGateway {
         req.playerId,
         req.color
       );
+      if (result.player1Score >= 10 || result.player2Score >= 10) {
+        this.server.to(req.roomId).emit(GameEvent.GameOver, result);
+      }
       if (result.match) {
         this.server.to(req.roomId).emit('new-task', result);
         this.server.to(req.roomId).emit('new-score', result);

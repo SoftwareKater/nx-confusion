@@ -37,11 +37,11 @@ In this article you will see how to create a simple multiplayer game using Angul
 You find all the code that is discussed in this artikel [here on github](https://github.com/SoftwareKater/nx-multiplayer-game). Also, the app is [deployed to heroku](https://nx-confusion-staging.herokuapp.com/). Pay a visit to see what we are up to.
 ### Tech Stack
 
-Nrwl Nx Workspace
-Angular 10
-Angular Material
-NestJs
-Socket.io
+[Nrwl Nx Workspace](https://nx.dev/angular)
+[Angular 10](https://angular.io/)
+[Angular Material](https://material.angular.io/)
+[NestJs](https://nestjs.com/)
+[Socket.io](https://socket.io/)
 
 ### What This Is Not
 

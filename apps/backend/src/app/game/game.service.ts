@@ -22,9 +22,6 @@ export class GameService {
         if (err) {
           reject(err);
         } else {
-          console.log(
-            `Successfully created new room ${roomId} and connected player1 ${player1Id}`
-          );
           this.inMemoryStorage.push({ roomId, player1Id });
           resolve({ roomId, player1Id });
         }

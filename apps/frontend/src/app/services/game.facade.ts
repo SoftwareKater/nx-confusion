@@ -8,6 +8,7 @@ import {
   Color,
   CreateGameResponse,
   GameData,
+  GameEvent,
   GameScore,
   GameState,
   JoinGameResponse,
@@ -96,9 +97,63 @@ export class GameFacade {
     this.updateState({ ...STATE, playerMove, loading: true });
   }
 
+  /**
+   * Returns true if the player won the game.
+   */
+  private checkGameWon(gameData: GameData) {
+    return (
+      (gameData.player1Score > gameData.player2Score &&
+        this.playerId === gameData.player1Id) ||
+      (gameData.player1Score < gameData.player2Score &&
+        this.playerId === gameData.player2Id)
+    );
+  }
+
   private createHandlers() {
+    this.createHandlerErrorCreating();
+    this.createHandlerErrorJoining();
+    this.createHandlerGameCreated();
+    this.createHandlerGameJoined();
+    this.createHandlerGameOver();
+    this.createHandlerPlayerJoined();
+    this.socketService.createHandler(GameEvent.NewScore, (res: GameData) => {
+      const score = {
+        ...STATE.score,
+        player1: res.player1Score,
+        player2: res.player2Score,
+      };
+      this.updateState({ ...STATE, score, loading: false });
+    });
+    this.socketService.createHandler(GameEvent.NewTask, (res: GameData) => {
+      this.updateState({ ...STATE, task: res.task, loading: false });
+    });
+  }
+
+  private createHandlerErrorCreating() {
     this.socketService.createHandler(
-      'game-created',
+      GameEvent.ErrorCreating,
+      (errMsg: string) => {
+        this.snackBar.open(`Error while creating the game: ${errMsg}`, '', {
+          duration: 2500,
+        });
+      }
+    );
+  }
+
+  private createHandlerErrorJoining() {
+    this.socketService.createHandler(
+      GameEvent.ErrorJoining,
+      (errMsg: string) => {
+        this.snackBar.open(`Error while joining the game: ${errMsg}`, '', {
+          duration: 2500,
+        });
+      }
+    );
+  }
+
+  private createHandlerGameCreated() {
+    this.socketService.createHandler(
+      GameEvent.GameCreated,
       (res: CreateGameResponse) => {
         this.roomId = res.roomId;
         this.playerId = res.player1Id;
@@ -109,20 +164,43 @@ export class GameFacade {
         });
       }
     );
-    this.socketService.createHandler('error-creating', (errMsg: string) => {
-      this.snackBar.open(`Error while creating the game: ${errMsg}`, '', {
-        duration: 2500,
-      });
-    });
-    this.socketService.createHandler('game-joined', (res: JoinGameResponse) => {
-      this.roomId = res.roomId;
-      this.playerId = res.player2Id;
-      this.snackBar.open(`Joined player 1 ${res.player1Id}`, '', {
-        duration: 2500,
-      });
-    });
+  }
+
+  private createHandlerGameJoined() {
     this.socketService.createHandler(
-      'player-joined',
+      GameEvent.GameJoined,
+      (res: JoinGameResponse) => {
+        this.roomId = res.roomId;
+        this.playerId = res.player2Id;
+        this.snackBar.open(`Joined player 1 ${res.player1Id}`, '', {
+          duration: 2500,
+        });
+      }
+    );
+  }
+
+  private createHandlerGameOver() {
+    this.socketService.createHandler(GameEvent.GameOver, (res: GameData) => {
+      if (res.player1Score === res.player2Score) {
+        this.snackBar.open('Tie!', '', {
+          duration: 2500,
+        });
+      }
+      if (this.checkGameWon(res)) {
+        this.snackBar.open(`Game Over - You Win`, 'Great!', {
+          duration: 2500,
+        });
+      } else {
+        this.snackBar.open('Game Over - You loose', 'Nah!', {
+          duration: 2500,
+        });
+      }
+    });
+  }
+
+  private createHandlerPlayerJoined() {
+    this.socketService.createHandler(
+      GameEvent.PlayerJoined,
       (res: JoinGameResponse) => {
         this.snackBar.open(`Player 2 ${res.player2Id} joined your game.`, '', {
           duration: 2500,
@@ -130,22 +208,6 @@ export class GameFacade {
         this.socketService.startGame(this.roomId);
       }
     );
-    this.socketService.createHandler('error-joining', (errMsg: string) => {
-      this.snackBar.open(`Error while joining the game: ${errMsg}`, '', {
-        duration: 2500,
-      });
-    });
-    this.socketService.createHandler('new-score', (res: GameData) => {
-      const score = {
-        ...STATE.score,
-        player1: res.player1Score,
-        player2: res.player2Score,
-      };
-      this.updateState({ ...STATE, score, loading: false });
-    });
-    this.socketService.createHandler('new-task', (res: GameData) => {
-      this.updateState({ ...STATE, task: res.task, loading: false });
-    });
   }
 
   /** Update internal state cache and emit from store... */

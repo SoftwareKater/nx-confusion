@@ -14,7 +14,6 @@ export class ButtonPanelComponent {
   }
 
   public onClick(color: Color) {
-    console.log(color);
     this.buttonPressed.emit(color);
   }
 }

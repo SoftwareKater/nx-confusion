@@ -8,7 +8,9 @@ A real-time multiplayer game demanding your senses and reaction to be at ninja l
 
 Here is a [demo](https://nx-confusion.herokuapp.com/).
 
-<img src="docs/demo.png" />
+<img src="docs/demo_menu.png" />
+
+<img src="docs/demo_side-by-side.png" />
 
 ## Documentation
 

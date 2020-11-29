@@ -1,10 +1,10 @@
-import { Color, GameState } from '@angular-multiplayer-reaction/types';
+import { Color, GameState } from '@nx-confusion/types';
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { GameFacade } from '../../services/game.facade';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-main',
+  selector: 'nx-confusion-main',
   templateUrl: 'main.component.html',
   styleUrls: ['main.component.scss'],
 })

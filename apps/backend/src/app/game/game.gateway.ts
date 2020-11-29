@@ -15,7 +15,7 @@ import {
   JoinGameResponse,
   PlayerMoveRequest,
   StartGameRequest,
-} from '@angular-multiplayer-reaction/types';
+} from '@nx-confusion/types';
 
 @WebSocketGateway()
 export class GameGateway {

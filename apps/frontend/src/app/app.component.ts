@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 @Component({
-  selector: 'angular-multiplayer-reaction-root',
+  selector: 'nx-confusion-root',
   template: `
-    <angular-multiplayer-reaction-main> </angular-multiplayer-reaction-main>
+    <nx-confusion-main> </nx-confusion-main>
   `,
 })
 export class AppComponent {}

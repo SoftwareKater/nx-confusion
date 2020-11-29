@@ -1,9 +1,9 @@
-import { GameTask } from '@angular-multiplayer-reaction/types';
+import { GameTask } from '@nx-confusion/types';
 import { Component, Input } from '@angular/core';
 import { ColorCodeMap } from '../../constants';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-game-screen',
+  selector: 'nx-confusion-game-screen',
   templateUrl: 'game-screen.component.html',
   styleUrls: ['game-screen.component.scss'],
 })

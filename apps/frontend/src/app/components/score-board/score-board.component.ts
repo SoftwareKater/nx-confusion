@@ -1,8 +1,8 @@
-import { GameScore } from '@angular-multiplayer-reaction/types';
+import { GameScore } from '@nx-confusion/types';
 import { Component, Input } from '@angular/core';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-score-board',
+  selector: 'nx-confusion-score-board',
   templateUrl: 'score-board.component.html',
   styleUrls: ['score-board.component.scss'],
 })

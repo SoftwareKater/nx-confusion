@@ -6,7 +6,7 @@ import {
   JoinGameRequest,
   PlayerMoveRequest,
   StartGameRequest,
-} from '@angular-multiplayer-reaction/types';
+} from '@nx-confusion/types';
 
 @Injectable({ providedIn: 'root' })
 export class SocketService {

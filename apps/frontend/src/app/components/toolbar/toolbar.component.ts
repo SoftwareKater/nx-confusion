@@ -7,7 +7,7 @@ import { HowToDialogComponent } from '../dialogs/how-to/how-to.dialog.component'
 import { JoinGameDialogComponent } from '../dialogs/join-game/join-game.dialog.component';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-toolbar',
+  selector: 'nx-confusion-toolbar',
   templateUrl: 'toolbar.component.html',
 })
 export class ToolbarComponent {

@@ -12,7 +12,7 @@ import {
   GameScore,
   GameState,
   JoinGameResponse,
-} from '@angular-multiplayer-reaction/types';
+} from '@nx-confusion/types';
 
 let STATE: GameState = {
   task: null,

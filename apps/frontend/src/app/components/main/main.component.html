@@ -1,17 +1,17 @@
 <div class="header">
-  <angular-multiplayer-reaction-toolbar></angular-multiplayer-reaction-toolbar>
+  <nx-confusion-toolbar></nx-confusion-toolbar>
 </div>
 
 <div class="content">
   <div *ngIf="vm$ | async as vm">
-    <angular-multiplayer-reaction-score-board
+    <nx-confusion-score-board
       [score]="vm.score"
-    ></angular-multiplayer-reaction-score-board>
+    ></nx-confusion-score-board>
 
-    <angular-multiplayer-reaction-game-screen
+    <nx-confusion-game-screen
       [task]="vm.task"
-    ></angular-multiplayer-reaction-game-screen>
+    ></nx-confusion-game-screen>
 
-    <angular-multiplayer-reaction-button-panel (buttonPressed)="onButtonPressed($event)"></angular-multiplayer-reaction-button-panel>
+    <nx-confusion-button-panel (buttonPressed)="onButtonPressed($event)"></nx-confusion-button-panel>
   </div>
 </div>

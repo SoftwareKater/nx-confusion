@@ -60,7 +60,7 @@
       },
       "root": "apps/frontend",
       "sourceRoot": "apps/frontend/src",
-      "prefix": "angular-multiplayer-reaction",
+      "prefix": "nx-confusion",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",

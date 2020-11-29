@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { MAT_SNACK_BAR_DATA, MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-game-created-snackbar',
+  selector: 'nx-confusion-game-created-snackbar',
   templateUrl: 'game-created.snackbar.component.html',
 })
 export class GameCreatedSnackbarComponent {

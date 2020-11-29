@@ -751,7 +751,7 @@ frontend/src/app/components/dialogs/create-game/create-game.dialog.component.ts
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-create-game-dialog',
+  selector: 'nx-confusion-create-game-dialog',
   templateUrl: 'create-game.dialog.component.html',
 })
 export class CreateGameDialogComponent {}
@@ -779,7 +779,7 @@ frontend/src/app/components/dialogs/join-game/join-game.dialog.component.ts
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-join-game-dialog',
+  selector: 'nx-confusion-join-game-dialog',
   templateUrl: 'join-game.dialog.component.html',
 })
 export class JoinGameDialogComponent {}
@@ -1848,7 +1848,7 @@ Update the build and start scripts in `package.json`.
 ```json
 
 {
-  "name": "angular-multiplayer-reaction",
+  "name": "nx-confusion",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {

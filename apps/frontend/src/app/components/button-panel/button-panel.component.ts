@@ -1,8 +1,8 @@
-import { Color } from '@angular-multiplayer-reaction/types';
+import { Color } from '@nx-confusion/types';
 import { Component, EventEmitter, Output } from '@angular/core';
 
 @Component({
-  selector: 'angular-multiplayer-reaction-button-panel',
+  selector: 'nx-confusion-button-panel',
   templateUrl: 'button-panel.component.html',
   styleUrls: ['button-panel.component.scss'],
 })

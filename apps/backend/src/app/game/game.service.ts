@@ -5,7 +5,7 @@ import {
   GameTask,
   JoinGameRequest,
   JoinGameResponse,
-} from '@angular-multiplayer-reaction/types';
+} from '@nx-confusion/types';
 import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { v4 as uuid } from 'uuid';

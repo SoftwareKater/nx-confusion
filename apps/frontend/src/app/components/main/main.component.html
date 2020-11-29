@@ -3,6 +3,15 @@
 </div>
 
 <div class="content">
+  <div *ngIf="staging" class="staging-disclaimer">
+    <span>
+      You are on the
+      <a href="https://en.wikipedia.org/wiki/Deployment_environment#Staging"
+        >staging evirnoment</a
+      >. Use with caution!
+    </span>
+  </div>
+
   <div *ngIf="vm$ | async as vm">
     <nx-confusion-timer-display
       [timer]="vm.timeCounter"
@@ -15,5 +24,41 @@
     <nx-confusion-button-panel
       (buttonPressed)="onButtonPressed($event)"
     ></nx-confusion-button-panel>
+  </div>
+
+  <div class="about-section">
+    <div id="browser-how-to" class="about-text">
+      Hit the buttons to match the color name that is displayed.
+    </div>
+    <div id="mobile-how-to" class="about-text">
+      Create a new game and send the room id to a friend. Or join a game, if you
+      have got a room id from a friend.
+      <br /><br />
+      Hit the buttons to match the color name that is displayed. A match will
+      earn you 1 point, a miss will loose 2 points. The player who scored more
+      points in 2 minutes wins.
+      <br /><br />
+      Have fun!
+    </div>
+    <div id="donate" class="about-text">
+      This game is free and the source code is publicly available on
+      <a href="https://github.com/SoftwareKater/nx-multiplayer-game">github</a>.
+    </div>
+    <div *ngIf="!staging" id="staging" class="about-text">
+      Want to see what may be coming up next? Have a look at the
+      <a href="http://nx-confusion-staging.herokuapp.com/">staging evironment</a
+      >!
+    </div>
+    <div *ngIf="staging" id="staging" class="about-text">
+      You are on the staging environment. Click
+      <a href="http://nx-confusion.herokuapp.com/">here</a> to go back to the
+      productive app!
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div id="creator" class="about-text">
+    Made with <span class="heart">❤</span> by Johannes Katzer.
   </div>
 </div>

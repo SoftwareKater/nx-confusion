@@ -13,7 +13,7 @@ export class GameScreenComponent {
       this.label = value.label.toUpperCase();
       this.bgColorHex = ColorCodeMap[value.background];
     } else {
-      this.label = 'TASK';
+      this.label = 'COLOR';
       this.bgColorHex = '#ffffff';
     }
   }

@@ -9,11 +9,14 @@ import { GameFacade } from '../../services/game.facade';
   styleUrls: ['main.component.scss'],
 })
 export class MainComponent implements OnInit {
+  public staging: boolean;
+
   public vm$: Observable<GameState> = this.gameFacade.viewModel$;
 
   constructor(private readonly gameFacade: GameFacade) {}
 
   ngOnInit() {
+    this.staging = window.location.origin.toLowerCase().search('staging') > 0;
     this.gameFacade.init();
   }
 

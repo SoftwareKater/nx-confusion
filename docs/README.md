@@ -1879,6 +1879,7 @@ Ideas for Refactorings include:
 
 
 Ideas for Fixes and Features:
+* Use clipboard.js to support copying room ids on mobile browsers
 * If a player creates a room while being in an ongoing game bad things happen.
 * Add a local storage service to the frontend app and persist the state of our app there. Create a mechanism to recover the app from the state snapshot in the localstorage. This allows users to re-enter the game after a page refresh.
 * Currently the game runs infinitely long, because there is no win condition. Introduce a win condition either score based or time based.

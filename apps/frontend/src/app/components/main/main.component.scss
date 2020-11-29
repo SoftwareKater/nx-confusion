@@ -1,4 +1,12 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
 .header {
+  width: 100%;
   margin-bottom: 32px;
 }
 
@@ -6,7 +14,69 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  width: 350px;
+  margin-left: 8px;
+  margin-right: 8px;
   * {
     margin-bottom: 16px;
+  }
+}
+
+.staging-disclaimer {
+  width: 100%;
+  height: 32px;
+  border-radius: 4px;
+  font-weight: 500;
+  background-color: red;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  a {
+    color: black;
+  }
+}
+
+.about-section {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+
+  .about-text {
+    margin-bottom: 16px;
+    padding-top: 16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.25);
+  }
+}
+
+#browser-how-to {
+  display: none;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  border-top: 1px ridge #000;
+  padding-top: 16px;
+  font-size: larger;
+
+  .heart {
+    color: #e25555;
+  }
+}
+
+// this breakpoint should also hide the arrow buttons
+@media only screen and (min-width: 6000px) {
+  #browser-how-to {
+    display: block;
+  }
+  #mobile-how-to {
+    display: none;
   }
 }

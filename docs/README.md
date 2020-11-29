@@ -37,11 +37,11 @@ In this article you will see how to create a simple multiplayer game using Angul
 You find all the code that is discussed in this artikel [here on github](https://github.com/SoftwareKater/nx-multiplayer-game). Also, the app is [deployed to heroku](https://nx-confusion-staging.herokuapp.com/). Pay a visit to see what we are up to.
 ### Tech Stack
 
-[Nrwl Nx Workspace](https://nx.dev/angular)
-[Angular 10](https://angular.io/)
-[Angular Material](https://material.angular.io/)
-[NestJs](https://nestjs.com/)
-[Socket.io](https://socket.io/)
+* [Nrwl Nx Workspace](https://nx.dev/angular)
+* [Angular 10](https://angular.io/)
+* [Angular Material](https://material.angular.io/)
+* [NestJs](https://nestjs.com/)
+* [Socket.io](https://socket.io/)
 
 ### What This Is Not
 
@@ -134,9 +134,8 @@ Lay the foundation of our game module, where we handle everything related to the
 
 The gateway will serve as the entrance to our backend. Clients that connect or send messages to the backend will be served by the gateway.
 
+`apps/backend/app/game/game.gateway.ts`
 ```typescript
-apps/backend/app/game/game.gateway.ts
-
 import {
   ConnectedSocket,
   SubscribeMessage,
@@ -168,8 +167,8 @@ export class GameGateway {
 
 For the tough work, the gateway will employ the game service.
 
+`apps/backend/app/game/game.service.ts`
 ```typescript
-apps/backend/app/game/game.service.ts
 
 import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
@@ -199,8 +198,8 @@ export class GameService {
 
 As you can see from the line `import { CreateGameResponse } from 'tools/schematics';` we keep the types at the common place `tools/schematics`. That folder was created when we first bootstrapped the NxDev mono repo.
 
+`tools/schematics/create-game-response.interface.ts`
 ```typescript
-tools/schematics/create-game-response.interface.ts
 
 export interface CreateGameResponse {
   roomId?: string;
@@ -208,8 +207,8 @@ export interface CreateGameResponse {
 }
 ```
 
+`tools/schematics/index.ts`
 ```typescript
-tools/schematics/index.ts
 
 export * from './create-game-response.interface';
 ```
@@ -220,8 +219,8 @@ Lets turn to the frontend. Create a socket service that handles the connection a
 λ npm install --save @types/socket.io-client
 ```
 
+`apps/frontend/src/app/socket.service.ts`
 ```typescript
-apps/frontend/src/app/socket.service.ts
 
 import { Injectable } from '@angular/core';
 import * as io from 'socket.io-client';
@@ -244,8 +243,8 @@ export class SocketService {
 
 Inject the socket service into the app component, by adding it to the constructor parameters. Angulars dependency injeciton system will take care of providing the singleton instance of the socket service to the app component.
 
+`apps/frontend/src/app/app.component.ts`
 ```typescript
-apps/frontend/src/app/app.component.ts
 
 import { Component, OnInit } from '@angular/core';
 import { SocketService } from './socket.service';
@@ -360,8 +359,8 @@ export * from './join-game-response.interface';
 
 In the gateway, add a new handler.
 
+`apps/backend/app/game/game.gateway.ts`
 ```typescript
-apps/backend/app/game/game.gateway.ts
 
 import {
   ConnectedSocket,
@@ -414,8 +413,8 @@ export class GameGateway {
 
 Again the Add the in-memory storage to the game service.
 
+`apps/backend/app/game/game.service.ts`
 ```typescript
-apps/backend/app/game/game.service.ts
 
 import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
@@ -483,8 +482,8 @@ export class GameService {
 
 Lets try out our new joining functionality, by creating the counterparts in our client. Add event handlers to the socket connection using `this.connection.on(event: string, (res: any) => void)`. Add a `joinGame` method that emits the `join-game` event and sends the required message body.
 
+`apps/frontend/src/app/socket.service.ts`
 ```typescript
-apps/frontend/src/app/socket.service.ts
 
 import { Injectable } from '@angular/core';
 import * as io from 'socket.io-client';
@@ -526,8 +525,8 @@ export class SocketService {
 
 In the OnInit life-cycle method of our app component, add a call to the new `joinGame` method.
 
+`apps/frontend/src/app/app.component.ts`
 ```typescript
-apps/frontend/src/app/app.component.ts
 
 ngOnInit() {
   this.socketService.connect();
@@ -581,6 +580,7 @@ Update the `index.html` with the material design icon font.
 
 Delete the contents of `app.component.html` and `app.component.scss`. Update `styles.scss` with the following definitions.
 
+`apps/frontend/src/styles.scss`
 ```scss
 html,
 body {
@@ -597,8 +597,8 @@ body {
 
 Now we are ready to start working on the user interface. Create a toolbar component in a new `components` folder. It will show the title of the app and a menu.
 
+`frontend/src/app/components/toolbar/toolbar.component.html`
 ```html
-frontend/src/app/components/toolbar/toolbar.component.html
 
 <mat-toolbar color="primary">
   <button
@@ -628,8 +628,8 @@ frontend/src/app/components/toolbar/toolbar.component.html
 
 In the typscript file add click handlers.
 
+`frontend/src/app/components/toolbar/toolbar.component.ts`
 ```typescript
-frontend/src/app/components/toolbar/toolbar.component.ts
 
 import { Component } from '@angular/core';
 
@@ -698,8 +698,8 @@ We will use modal dialogs to communicate with the user. All the entries in the m
 
 Create a new folder `components/dialogs` where we keep all the dialogs we are about to create. Inside that create a new folder `how-to` and add the following two files
 
+`frontend/src/app/components/dialogs/how-to/how-to.dialog.component.html`
 ```html
-frontend/src/app/components/dialogs/how-to/how-to.dialog.component.html
 
 <h1 mat-dialog-title>How To</h1>
 <div mat-dialog-content>Describe the game. Describe the other menu items.</div>
@@ -708,8 +708,8 @@ frontend/src/app/components/dialogs/how-to/how-to.dialog.component.html
 </div>
 ```
 
+`frontend/src/app/components/dialogs/how-to/how-to.dialog.component.ts`
 ```typescript
-frontend/src/app/components/dialogs/how-to/how-to.dialog.component.ts
 
 import { Component } from '@angular/core';
 
@@ -722,8 +722,8 @@ export class HowToDialogComponent {}
 
 To wire the dialog and the how to menu item, import the `HowToDialogComponent` into the toolbar component and change the callback method.
 
+`frontend/src/app/components/toolbar/toolbar.component.ts`
 ```typescript
-frontend/src/app/components/toolbar/toolbar.component.ts
 
 public onHowTo() {
   this.dialog.open(HowToDialogComponent);
@@ -732,8 +732,8 @@ public onHowTo() {
 
 Here are the other two dialogs.
 
+`frontend/src/app/components/dialogs/create-game/create-game.dialog.component.html`
 ```html
-frontend/src/app/components/dialogs/create-game/create-game.dialog.component.html
 
 <h1 mat-dialog-title>Create Game</h1>
 <div mat-dialog-content>
@@ -745,8 +745,8 @@ frontend/src/app/components/dialogs/create-game/create-game.dialog.component.htm
 </div>
 ```
 
+`frontend/src/app/components/dialogs/create-game/create-game.dialog.component.ts`
 ```typescript
-frontend/src/app/components/dialogs/create-game/create-game.dialog.component.ts
 
 import { Component } from '@angular/core';
 
@@ -757,8 +757,8 @@ import { Component } from '@angular/core';
 export class CreateGameDialogComponent {}
 ```
 
+`frontend/src/app/components/dialogs/join-game/join-game.dialog.component.html`
 ```html
-frontend/src/app/components/dialogs/join-game/join-game.dialog.component.html
 
 <h1 mat-dialog-title>Join Game</h1>
 <div mat-dialog-content>
@@ -773,8 +773,8 @@ frontend/src/app/components/dialogs/join-game/join-game.dialog.component.html
 </div>
 ```
 
+`frontend/src/app/components/dialogs/join-game/join-game.dialog.component.ts`
 ```typescript
-frontend/src/app/components/dialogs/join-game/join-game.dialog.component.ts
 
 import { Component } from '@angular/core';
 
@@ -787,8 +787,8 @@ export class JoinGameDialogComponent {}
 
 Delete everything but the connect call from the app components OnInit method.
 
+`apps/frontend/src/app/app.component.ts`
 ```typescript
-apps/frontend/src/app/app.component.ts
 
 ngOnInit() {
   this.socketService.connect();
@@ -819,15 +819,15 @@ public connect(): void {
 
 For the game created snackbar lets create a new folder `snackbars` next to `dialogs` and add a new component `game-created.snackbar.component` there.
 
+`frontend/src/app/components/snackbars/game-created/game-created.snackbar.component.html`
 ```html
-frontend/src/app/components/snackbars/game-created/game-created.snackbar.component.html
 
 <span> Game created! Room id: {{ data.roomId }} </span>
 <button mat-button (click)="copyRoomIdAndDismiss()"><mat-icon>content_copy</mat-icon></button>
 ```
 
+`frontend/src/app/components/snackbars/game-created/game-created.snackbar.component.ts`
 ```typescript
-frontend/src/app/components/snackbars/game-created/game-created.snackbar.component.ts
 
 import { Inject } from '@angular/core';
 import { Component } from '@angular/core';
@@ -913,8 +913,8 @@ handleJoinGame(
 
 We have set up the general layout to create a game inside it. Before we dive into game play, lets lay a foundation with a little refactoring. We already cramed our app module with all those material imports and dialog declarations. Lets keep the template, style sheet and typescript of our app component to a minimum. But we do need a container to orchestrate all our components. As shown in the architecture diagram, that purpose will be served by the main component.
 
+`frontend/src/app/components/main/main.component.html`
 ```html
-frontend/src/app/components/main/main.component.html
 
 <div class="header">
   <nx-confusion-toolbar></nx-confusion-toolbar>
@@ -924,8 +924,8 @@ frontend/src/app/components/main/main.component.html
 </div>
 ```
 
+`frontend/src/app/components/main/main.component.scss`
 ```scss
-frontend/src/app/components/main/main.component.scss
 
 .header {
   margin-bottom: 16px;
@@ -958,7 +958,7 @@ If you want to learn more about this great architecture head over to (this)[http
 
 Create a new file game.facade.ts with the following content.
 
-frontend/src/app/game.facade.ts
+`apps/frontend/src/app/game.facade.ts`
 ```typescript
 
 import { Injectable } from '@angular/core';
@@ -1063,7 +1063,7 @@ export class GameFacade {
 
 As you can see in the `init` method, now the game facade is reponsible for creating the socket connection. The app component will in turn trigger the game facade.
 
-frontend/src/app/main.component.ts
+`frontend/src/app/main.component.ts`
 ```typescript
 
 import { Component, OnInit } from '@angular/core';
@@ -1159,8 +1159,8 @@ private getGameIdxByRoomId(roomId: string): number {
 
 As soon as both players have joined the room, player 1 will emit the `start-game` event. The backend then has to check if everything is set up to start the game and if so create the first task.
 
+`game.service.ts`
 ```typescript
-game.service.ts
 
 public startGame(roomId: string): GameData {
   const game = this.inMemoryStorage[this.getGameIdxByRoomId(roomId)];
@@ -1184,8 +1184,8 @@ private createTask(): GameTask {
 
 We need a new endpoint in the gateway to trigger the new `startGame` method.
 
+`game.gateway.ts`
 ```typescript
-game.gateway.ts
 
 @SubscribeMessage('start-game')
 handleStartGame(
@@ -1205,8 +1205,8 @@ handleStartGame(
 
 After the game started, the players will make moves to score points. The game service needs to check whether a given player move is a match and award points to the player. Also if is a match, it must create a new task. The complete game service will look like that.
 
+`game.service.ts`
 ```typescript
-game.service.ts
 
 import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
@@ -1324,9 +1324,8 @@ export class GameService {
 
 After adding the corresponding gateway for the `player-move` event, the complete game gateway will look like this.
 
+`game.gateway.ts`
 ```typescript
-game.gateway.ts
-
 import {
   ConnectedSocket,
   MessageBody,
@@ -1427,8 +1426,8 @@ Before we connect the frontend to the refined backend, lets work on the UI again
 
 #### Score Board
 
+`apps/frontend/src/app/components/score-board/score-board.component.ts`
 ```typescript
-apps/frontend/src/app/components/score-board/score-board.component.ts
 
 import { GameScore } from 'tools/schematics';
 
@@ -1453,19 +1452,15 @@ export class ScoreBoardComponent {
   public player2Score: string;
 }
 ```
-
+`apps/frontend/src/app/components/score-board/score-board.component.html`
 ```html
-score-board.component.html
-
 <div class="score-container">
   <span class="score">{{ player1Score }}</span>
   <span class="score">{{ player2Score }}</span>
 </div>
 ```
-
+`apps/frontend/src/app/components/score-board/score-board.component.scss`
 ```scss
-score-board.component.scss
-
 :host {
   height: 100%;
   display: flex;
@@ -1487,12 +1482,9 @@ score-board.component.scss
 
 #### Game Screen
 
-```shell
-ng g c components/game-screen
-```
-
+`apps/frontend/src/app/components/game-screen/game-screen.component.ts`
 ```typescript
-game-screen.component.ts
+
 
 import { Component, Input } from '@angular/core';
 import { GameTask } from 'tools/schematics';
@@ -1515,17 +1507,15 @@ export class GameScreenComponent {
 }
 ```
 
+`apps/frontend/src/app/components/game-screen/game-screen.component.html`
 ```html
-game-screen.component.html
-
 <div class="game-screen" [ngStyle]="{'backgroundColor': bgColorHex }">
   <span class="color-label">{{ label }}</span>
 </div>
 ```
 
+`apps/frontend/src/app/components/game-screen/game-screen.component.scss`
 ```scss
-game-screen.component.scss
-
 :host {
   display: flex;
   justify-content: center;
@@ -1546,11 +1536,10 @@ game-screen.component.scss
 }
 ```
 
+`apps/frontend/src/app/components/button-panel/button-panel.component.ts`
 #### Button Panel
 
 ```typescript
-button-panel.component.ts
-
 import { Component, EventEmitter, Output } from '@angular/core';
 import { Color } from 'tools/schematics';
 
@@ -1573,9 +1562,8 @@ export class ButtonPanelComponent {
 }
 ```
 
+`apps/frontend/src/app/components/button-panel/button-panel.component.html`
 ```html
-button-panel.component.html
-
 <button mat-button id="red-button" (click)="onClick(color.Red)">Q</button>
 <button mat-button id="yellow-button" (click)="onClick(color.Yellow)">W</button>
 <button mat-button id="blue-button" (click)="onClick(color.Blue)">E</button>
@@ -1584,9 +1572,8 @@ button-panel.component.html
 
 TODO: Colors should be defined at one point only (ssot)
 
+`apps/frontend/src/app/components/button-panel/button-panel.component.scss`
 ```scss
-button-panel.component.scss
-
 :host {
   width: 400px;
   height: 100%;
@@ -1872,12 +1859,10 @@ npm run start
 
 and visit your browser at `http://localhost:3333`. Yes, that is not a 4200 after the colon. Our backend now serves the frontend, so both are available on the same port.
 
-Provided that you have put the app under version control, all that is left to do now for you to deploy the app is
+Provided that you have put the app under version control, all that is left to do for you to deploy the app is
 * registering with heroku
 * create an app via the web interface
 * target your github repo master branch for automatic builds
-
-
 
 ## Conclusion
 
@@ -1890,16 +1875,16 @@ Ideas for Refactorings include:
 * Divide both the game service and gateway along their two purposes: managing rooms (createGame, joinGame), managing games (...). Before you do this, you should definetly extract the in-memory storage.
 * Extract material imports into a library.
 * Modularize the frontend. Create a folder modules next to the components folder. In that folder create a folder dialogs/components. Now move all contens of the old app/components/dialogs into the folder app/modules/dialogs/components. Create a new file app/modules/dialogs/dialog.module.ts and declare all dialogs here. Remove the declaration of the dialogs from app/app.module.ts and instead import the new DialogModule and add it the imports array.
+* Create data structures for all variables that currently have the type `any`.
 
 
 Ideas for Fixes and Features:
-* After player 2 joined a room, the room should be closed for new connections. Curretly player 2 users can be kicked out by other joining users.
+* If a player creates a room while being in an ongoing game bad things happen.
 * Add a local storage service to the frontend app and persist the state of our app there. Create a mechanism to recover the app from the state snapshot in the localstorage. This allows users to re-enter the game after a page refresh.
 * Currently the game runs infinitely long, because there is no win condition. Introduce a win condition either score based or time based.
 
 ## Article TODOs
 
-* Move models/interfaces from tools/schematics into library.
-* Build data structures for all variables that currently have the type `any`.
-* Rework all mentions of tools/schemats: types are stored in the types lib. Also explain that we can share types between frontend and backend because nx rules!
-* Reworked game-data interface, to introduce win condition.
+* Update all mentions of tools/schemats: types are stored in the types lib. Also explain that we can share types between frontend and backend because nx rules!
+* Update game-data interface.
+* Introduce win condition.

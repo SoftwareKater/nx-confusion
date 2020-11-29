@@ -1,8 +1,9 @@
 import { GameTask, Color, GameScore } from '../..';
 
 export interface GameState {
-  task: GameTask;
+  loading: boolean;
   playerMove: Color;
   score: GameScore;
-  loading: boolean;
+  task: GameTask;
+  timeCounter: number;
 }

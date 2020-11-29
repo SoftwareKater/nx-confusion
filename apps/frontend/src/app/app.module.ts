@@ -21,12 +21,14 @@ import { GameScreenComponent } from './components/game-screen/game-screen.compon
 import { MainComponent } from './components/main/main.component';
 import { ButtonPanelComponent } from './components/button-panel/button-panel.component';
 import { ScoreBoardComponent } from './components/score-board/score-board.component';
+import { TimerDisplayComponent } from './components/timer-display/timer-display.component';
 
 const COMPONENT_DECLARATIONS = [
   ButtonPanelComponent,
   GameScreenComponent,
   MainComponent,
   ScoreBoardComponent,
+  TimerDisplayComponent,
   ToolbarComponent,
 ];
 

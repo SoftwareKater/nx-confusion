@@ -4,14 +4,16 @@
 
 <div class="content">
   <div *ngIf="vm$ | async as vm">
-    <nx-confusion-score-board
-      [score]="vm.score"
-    ></nx-confusion-score-board>
+    <nx-confusion-timer-display
+      [timer]="vm.timeCounter"
+    ></nx-confusion-timer-display>
 
-    <nx-confusion-game-screen
-      [task]="vm.task"
-    ></nx-confusion-game-screen>
+    <nx-confusion-score-board [score]="vm.score"></nx-confusion-score-board>
 
-    <nx-confusion-button-panel (buttonPressed)="onButtonPressed($event)"></nx-confusion-button-panel>
+    <nx-confusion-game-screen [task]="vm.task"></nx-confusion-game-screen>
+
+    <nx-confusion-button-panel
+      (buttonPressed)="onButtonPressed($event)"
+    ></nx-confusion-button-panel>
   </div>
 </div>

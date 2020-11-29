@@ -16,6 +16,7 @@ import {
 
 let STATE: GameState = {
   task: null,
+  timeCounter: 120,
   playerMove: null,
   score: null,
   loading: true,
@@ -25,11 +26,16 @@ let STATE: GameState = {
 export class GameFacade {
   private roomId: string;
   private playerId: string;
+  private otherPlayerId: string;
   private store = new BehaviorSubject<GameState>(STATE);
   private state$ = this.store.asObservable();
 
   task$ = this.state$.pipe(
     map((state) => state.task),
+    distinctUntilChanged()
+  );
+  timeCounter$ = this.state$.pipe(
+    map((state) => state.timeCounter),
     distinctUntilChanged()
   );
   playerMove$ = this.state$.pipe(
@@ -47,12 +53,13 @@ export class GameFacade {
    */
   public viewModel$: Observable<GameState> = combineLatest([
     this.task$,
+    this.timeCounter$,
     this.playerMove$,
     this.score$,
     this.loading$,
   ]).pipe(
-    map(([task, playerMove, score, loading]) => {
-      return { task, playerMove, score, loading };
+    map(([task, timeCounter, playerMove, score, loading]) => {
+      return { task, timeCounter, playerMove, score, loading };
     })
   );
 
@@ -101,12 +108,7 @@ export class GameFacade {
    * Returns true if the player won the game.
    */
   private checkGameWon(gameData: GameData) {
-    return (
-      (gameData.player1Score > gameData.player2Score &&
-        this.playerId === gameData.player1Id) ||
-      (gameData.player1Score < gameData.player2Score &&
-        this.playerId === gameData.player2Id)
-    );
+    return gameData[this.playerId].score > gameData[this.otherPlayerId].score;
   }
 
   private createHandlers() {
@@ -116,16 +118,21 @@ export class GameFacade {
     this.createHandlerGameJoined();
     this.createHandlerGameOver();
     this.createHandlerPlayerJoined();
+    this.createHandlerTimeCounterUpdate();
     this.socketService.createHandler(GameEvent.NewScore, (res: GameData) => {
       const score = {
         ...STATE.score,
-        player1: res.player1Score,
-        player2: res.player2Score,
+        player1: res[this.playerId].score,
+        player2: res[this.otherPlayerId].score,
       };
       this.updateState({ ...STATE, score, loading: false });
     });
     this.socketService.createHandler(GameEvent.NewTask, (res: GameData) => {
-      this.updateState({ ...STATE, task: res.task, loading: false });
+      this.updateState({
+        ...STATE,
+        task: res[this.playerId].task,
+        loading: false,
+      });
     });
   }
 
@@ -172,6 +179,7 @@ export class GameFacade {
       (res: JoinGameResponse) => {
         this.roomId = res.roomId;
         this.playerId = res.player2Id;
+        this.otherPlayerId = res.player1Id;
         this.snackBar.open(`Joined player 1 ${res.player1Id}`, '', {
           duration: 2500,
         });
@@ -181,18 +189,18 @@ export class GameFacade {
 
   private createHandlerGameOver() {
     this.socketService.createHandler(GameEvent.GameOver, (res: GameData) => {
-      if (res.player1Score === res.player2Score) {
+      if (res[this.playerId].score === res[this.otherPlayerId].score) {
         this.snackBar.open('Tie!', '', {
-          duration: 2500,
+          duration: 5000,
         });
       }
       if (this.checkGameWon(res)) {
         this.snackBar.open(`Game Over - You Win`, 'Great!', {
-          duration: 2500,
+          duration: 5000,
         });
       } else {
         this.snackBar.open('Game Over - You loose', 'Nah!', {
-          duration: 2500,
+          duration: 5000,
         });
       }
     });
@@ -202,12 +210,26 @@ export class GameFacade {
     this.socketService.createHandler(
       GameEvent.PlayerJoined,
       (res: JoinGameResponse) => {
+        this.otherPlayerId = res.player2Id;
         this.snackBar.open(`Player 2 ${res.player2Id} joined your game.`, '', {
           duration: 2500,
         });
         this.socketService.startGame(this.roomId);
       }
     );
+  }
+
+  private createHandlerTimeCounterUpdate() {
+    this.socketService.createHandler(
+      GameEvent.TimeCounterUpdate,
+      (game: GameData) => {
+        this.updateTimeCounter(game.timeCounter);
+      }
+    );
+  }
+
+  private updateTimeCounter(timeCounter: number) {
+    this.updateState({ ...STATE, timeCounter, loading: false });
   }
 
   /** Update internal state cache and emit from store... */

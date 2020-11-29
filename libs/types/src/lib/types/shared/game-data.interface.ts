@@ -1,11 +1,10 @@
-import { GameTask } from './game-task.interface';
+import { PlayerData } from './player-data.interface';
 
 export interface GameData {
   match?: boolean;
   roomId?: string;
+  timeCounter?: number;
   player1Id?: string;
-  player1Score?: number;
   player2Id?: string;
-  player2Score?: number;
-  task?: GameTask;
+  playerData?: { [playerId: string]: PlayerData };
 }

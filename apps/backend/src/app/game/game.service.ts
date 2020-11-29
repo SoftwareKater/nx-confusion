@@ -2,12 +2,14 @@ import {
   Color,
   CreateGameResponse,
   GameData,
+  GameEvent,
   GameTask,
   JoinGameRequest,
   JoinGameResponse,
+  PlayerData,
 } from '@nx-confusion/types';
 import { Injectable } from '@nestjs/common';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
@@ -36,13 +38,18 @@ export class GameService {
     const roomId = request.roomId;
     const player2Id = socket.id;
     const gameIdx = this.getGameIdxByRoomId(roomId);
-    const player1Id = this.inMemoryStorage[gameIdx].player1Id;
+    const game = this.inMemoryStorage[gameIdx];
+    const player1Id = game.player1Id;
+    const roomIsFull = !!game.player1Id && !!game.player2Id;
+    if (roomIsFull) {
+      throw new Error('RoomIsFull');
+    }
     return new Promise((resolve, reject) => {
       socket.join(roomId, (err) => {
         if (err) {
           reject(err);
         } else {
-          this.inMemoryStorage[gameIdx].player2Id = player2Id;
+          game.player2Id = player2Id;
           resolve({
             roomId,
             player1Id,
@@ -53,13 +60,16 @@ export class GameService {
     });
   }
 
-  public startGame(roomId: string): GameData {
+  public startGame(server: Server, roomId: string): GameData {
     const game = this.inMemoryStorage[this.getGameIdxByRoomId(roomId)];
     const ready = !!game.player1Id && !!game.player2Id;
     if (ready) {
-      game.task = this.createTask();
-      game.player1Score = 0;
-      game.player2Score = 0;
+      const player1Data = { task: this.createTask(), score: 0 };
+      const player2Data = { task: this.createTask(), score: 0 };
+      game[game.player1Id] = player1Data;
+      game[game.player2Id] = player2Data;
+      game.timeCounter = 120;
+      this.startCounter(server, game);
       return game;
     } else {
       throw new Error('NotEnoughPlayers');
@@ -73,18 +83,33 @@ export class GameService {
   ): GameData {
     const game = this.inMemoryStorage[this.getGameIdxByRoomId(roomId)];
     game.match = false;
-    if (this.checkMatch(game, playerColor)) {
-      this.updateScore(game, playerId, 1);
+    if (this.checkMatch(game, playerId, playerColor)) {
+      game[playerId].score = this.getNewScore(game, playerId, 1);
       game.match = true;
-      game.task = this.createTask();
+      game[playerId].task = this.createTask();
     } else {
-      this.updateScore(game, playerId, -2);
+      game[playerId].score = this.getNewScore(game, playerId, -2);
     }
     return game;
   }
 
-  private checkMatch(game: GameData, playerColor: Color): boolean {
-    if (game.task.label === playerColor) {
+  private startCounter(server: Server, game: GameData) {
+    const interval = setInterval(() => {
+      game.timeCounter -= 1;
+      server.to(game.roomId).emit(GameEvent.TimeCounterUpdate, game);
+      if (game.timeCounter <= 0) {
+        server.to(game.roomId).emit(GameEvent.GameOver, game);
+        clearInterval(interval);
+      }
+    }, 1000);
+  }
+
+  private checkMatch(
+    game: GameData,
+    playerId: string,
+    playerColor: Color
+  ): boolean {
+    if (game[playerId].task.label === playerColor) {
       return true;
     }
     return false;
@@ -113,17 +138,12 @@ export class GameService {
     return gameIdx;
   }
 
-  private updateScore(
+  private getNewScore(
     game: GameData,
     playerId: string,
     scoreDelta: number
-  ): void {
-    if (game.player1Id === playerId) {
-      game.player1Score =
-        game.player1Score + scoreDelta > 0 ? game.player1Score + scoreDelta : 0;
-    } else {
-      game.player2Score =
-        game.player2Score + scoreDelta > 0 ? game.player2Score + scoreDelta : 0;
-    }
+  ): number {
+    const currentScore = (game[playerId] as PlayerData).score;
+    return currentScore + scoreDelta > 0 ? currentScore + scoreDelta : 0;
   }
 }

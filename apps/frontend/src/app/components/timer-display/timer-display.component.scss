@@ -1,0 +1,18 @@
+:host {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.timer-container {
+  width: 256px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+
+.timer {
+  font-size: 36px;
+}

@@ -1902,3 +1902,4 @@ Ideas for Fixes and Features:
 * Move models/interfaces from tools/schematics into library.
 * Build data structures for all variables that currently have the type `any`.
 * Rework all mentions of tools/schemats: types are stored in the types lib. Also explain that we can share types between frontend and backend because nx rules!
+* Reworked game-data interface, to introduce win condition.

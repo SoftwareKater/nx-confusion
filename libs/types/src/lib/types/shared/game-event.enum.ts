@@ -11,4 +11,5 @@ export enum GameEvent {
   PlayerJoined = 'player-joined',
   PlyerMove = 'player-move',
   StartGame = 'start-game',
+  TimeCounterUpdate = 'time-counter-update',
 }

@@ -456,7 +456,7 @@ export class GameService {
     const roomId = request.roomId;
     const player2Id = socket.id;
     const gameIdx = this.inMemoryStorage.find(game => game.roomId === roomId);
-    if (gameIdx <= 0) {
+    if (gameIdx < 0) {
       throw new Error('RoomNotFound');
     }
     const player1Id = this.inMemoryStorage[gameIdx].player1Id;
@@ -1148,7 +1148,7 @@ game.service.ts
 
 private getGameIdxByRoomId(roomId: string): number {
   const gameIdx = this.inMemoryStorage.findIndex((g) => g.roomId === roomId);
-  if (gameIdx <= 0) {
+  if (gameIdx < 0) {
     throw new Error('RoomNotFound');
   }
   return gameIdx;
@@ -1306,7 +1306,7 @@ export class GameService {
 
   private getGameIdxByRoomId(roomId: string): number {
     const gameIdx = this.inMemoryStorage.findIndex((g) => g.roomId === roomId);
-    if (gameIdx <= 0) {
+    if (gameIdx < 0) {
       throw new Error('RoomNotFound');
     }
     return gameIdx;

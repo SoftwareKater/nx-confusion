@@ -107,7 +107,7 @@ export class GameService {
 
   private getGameIdxByRoomId(roomId: string): number {
     const gameIdx = this.inMemoryStorage.findIndex((g) => g.roomId === roomId);
-    if (gameIdx <= 0) {
+    if (gameIdx < 0) {
       throw new Error('RoomNotFound');
     }
     return gameIdx;
